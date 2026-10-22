@@ -1,6 +1,6 @@
 // Service worker : réseau d'abord, cache en secours (mode hors ligne).
 // Après l'ajout d'un jeu, ajoutez ses fichiers à ASSETS et changez VERSION.
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = "jeux-entre-potes-" + VERSION;
 const ASSETS = [
   "./", "index.html", "manifest.webmanifest",
