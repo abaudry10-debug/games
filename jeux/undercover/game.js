@@ -1,5 +1,5 @@
-const WS = W.map((w, i) => ({ id: "w" + (i + 1), p: w[0], a: w[1], b: w[2] }));
-const IS = IMG.map((m, i) => ({ id: "i" + (i + 1), p: m[0], a: m[1], la: m[2], b: m[3], lb: m[4] }));
+const WS = W.map((w, i) => ({ id: "w" + (i + 1), p: w[0], cat: w[1], a: w[2], b: w[3], n: w[4] }));
+const IS = IMG.map((m, i) => ({ id: "i" + (i + 1), p: m[0], cat: m[0], a: m[1], la: m[2], b: m[3], lb: m[4], n: m[5] }));
 const KEY = "jeux.undercover.v1";
 const ROLE = { c: "Civil", u: "Undercover", w: "Mr White" };
 const PTS = { c: 2, u: 10, w: 6 };
@@ -8,18 +8,46 @@ let S, lastScreen = null, lock = null;
 
 function defaults() {
   return { screen: "setup", players: ["Léa", "Tom", "Sam", "Inès", "Hugo"], example: true,
-    mode: "mots", packs: { classique: true, soiree: true, culture: true }, ipacks: { perso: true, lieux: true, situations: true }, nU: 1, nW: 1, custom: [],
+    mode: "mots", packs: { classique: true, soiree: true, culture: true }, ipacks: { perso: true, lieux: true, situations: true }, sim: 4, nU: 1, nW: 1, custom: [],
     scores: {}, used: [], gameNo: 0, g: null, msg: "", arm: "" };
 }
 function load(key) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, mode: S.mode, packs: S.packs, ipacks: S.ipacks, nU: S.nU, nW: S.nW, custom: S.custom,
+  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, mode: S.mode, packs: S.packs, ipacks: S.ipacks, sim: S.sim, nU: S.nU, nW: S.nW, custom: S.custom,
     scores: S.scores, used: S.used, gameNo: S.gameNo, g: S.g, screen: S.screen })); } catch (e) {}
 }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const rand = n => Math.floor(Math.random() * n);
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-const pool = () => S.mode === "images" ? IS.filter(w => S.ipacks[w.p]) : WS.filter(w => S.packs[w.p]).concat(S.custom.map(c => ({ id: "c" + c.id, p: "perso", a: c.a, b: c.b })));
+const pool = () => S.mode === "images" ? IS.filter(w => S.ipacks[w.p]) : WS.filter(w => S.packs[w.p]).concat(S.custom.map(c => ({ id: "c" + c.id, p: "perso", cat: "perso", a: c.a, b: c.b, n: 0 })));
+
+// Tire une paire selon le taux de ressemblance choisi.
+// 3 à 5 : paires de la banque de ce niveau (paires perso : à tous ces niveaux), sinon le niveau le plus proche.
+// 2 : deux mots ou photos du même thème qui ne forment pas une paire ; 1 : deux de thèmes différents.
+function pickPair(all, lvl) {
+  if (lvl <= 2) {
+    const items = all.flatMap(w => [{ v: w.a, l: w.la, cat: w.cat, id: w.id }, { v: w.b, l: w.lb, cat: w.cat, id: w.id }]);
+    for (let t = 0; t < 40; t++) {
+      const x = items[rand(items.length)];
+      const ys = items.filter(y => y.v !== x.v && y.id !== x.id && (lvl === 2 ? y.cat === x.cat : y.cat !== x.cat));
+      if (ys.length) { const y = ys[rand(ys.length)]; return { id: null, a: x.v, la: x.l, b: y.v, lb: y.l }; }
+    }
+    return pickPair(all, 3);
+  }
+  let cands = [];
+  for (const d of [0, 1, -1, 2, -2]) {
+    const n = lvl + d;
+    if (n < 3 || n > 5) continue;
+    cands = all.filter(w => w.n === n || w.n === 0);
+    if (cands.length) break;
+  }
+  if (!cands.length) cands = all;
+  let fresh = cands.filter(w => !S.used.includes(w.id));
+  if (!fresh.length) { S.used = S.used.filter(id => !cands.some(w => w.id === id)); fresh = cands; }
+  const w = fresh[rand(fresh.length)];
+  S.used.push(w.id);
+  return w;
+}
 
 // Les civils doivent rester majoritaires : au plus (n - 1) / 2 imposteurs, Mr White compris.
 function eff() {
@@ -88,6 +116,7 @@ const V = {
       <div class="seg">${[["mots", "Mots"], ["images", "Images"]].map(([k, l]) => `<button data-a="mode" data-k="${k}" aria-pressed="${S.mode === k}">${l}</button>`).join("")}</div>
       <p class="note">${img ? "Chacun reçoit une photo, l'undercover une photo proche." : "Chacun reçoit un mot, l'undercover un mot proche."}</p>
     </section>
+    ${simPicker(S.sim, img ? "images" : "mots")}
     <section class="field">
       <div class="label">Undercovers</div>
       <div class="seg">${[0, 1, 2, 3].map(k => `<button data-a="nu" data-k="${k}" aria-pressed="${e.u === k}" ${k > e.m || (k === 0 && e.w === 0) ? "disabled" : ""}>${k}</button>`).join("")}</div>
@@ -130,6 +159,7 @@ const V = {
           <li>On recommence jusqu'à la victoire d'un camp. Les civils gagnent quand tous les imposteurs sont éliminés. Les imposteurs gagnent s'il ne reste plus qu'un civil.</li>
         </ol>
         <p><strong>Mode Images :</strong> même principe avec des images. Chacun décrit son image sans la nommer, et Mr White doit deviner l'image des civils. Les photos viennent de Wikimedia Commons (<a href="credits.html">auteurs et licences</a>). Il faut Internet la première fois, ensuite elles restent sur le téléphone.</p>
+        <p><strong>Taux de ressemblance :</strong> de « très faible » (deux mots ou photos sans aucun rapport) à « très haut » (presque identiques, comme deux présidents français). Les paires perso sont utilisées aux niveaux moyen, haut et très haut.</p>
         <p>Un joueur a oublié son mot ou son image ? Bouton « Revoir » pendant la partie.</p>
         <p><strong>Points :</strong> victoire des civils, 2 points par civil. Victoire des imposteurs, 10 points par undercover et 6 points pour Mr White s'il est encore en jeu. Mr White qui trouve le mot marque 6 points.</p>
       </div>
@@ -212,7 +242,7 @@ const V = {
     return `${head("Fin de partie")}
     <div class="verdict-wrap"><div class="verdict">${title}</div></div>
     <p class="lead center">${line}</p>
-    <section class="box"><div class="label">Les ${voc().mots}</div>
+    <section class="box"><div class="label">Les ${voc().mots} · ressemblance ${(SIM_LEVELS.find(s => s.n === g.sim) || SIM_LEVELS[3]).label.toLowerCase()}</div>
       <div class="answers">${[["Civils", g.civ, g.civL], ["Undercover", g.und, g.undL]].map(([k, w, l]) => `<div class="ans"><span>${k}</span><strong>${g.mode === "images" ? `<img class="thumb" src="${esc(w)}" alt=""> ${esc(l)}` : esc(w)}</strong></div>`).join("")}</div></section>
     <section class="field"><div class="label">Les rôles</div>
       <div class="answers">${S.players.map(p => `<div class="ans"><span>${esc(p)}${g.alive.includes(p) ? "" : ` <small class="note">éliminé</small>`}</span><strong>${ROLE[g.roles[p]]}</strong></div>`).join("")}</div></section>
@@ -242,14 +272,11 @@ function speakOrder() {
 
 function newGame() {
   const all = pool(), e = eff(); if (S.players.length < 3 || !all.length) return;
-  let fresh = all.filter(w => !S.used.includes(w.id));
-  if (!fresh.length) { S.used = S.used.filter(id => !all.some(w => w.id === id)); fresh = all; }
-  const w = fresh[rand(fresh.length)], flip = rand(2);
-  S.used.push(w.id);
+  const w = pickPair(all, S.sim), flip = rand(2);
   const players = S.players.slice(), first = S.gameNo % players.length, roles = {};
   shuffle(players).forEach((p, i) => { roles[p] = i < e.u ? "u" : i < e.u + e.w ? "w" : "c"; });
   S.gameNo += 1;
-  S.g = { no: S.gameNo, mode: S.mode, civ: flip ? w.b : w.a, und: flip ? w.a : w.b, civL: flip ? w.lb : w.la, undL: flip ? w.la : w.lb, roles,
+  S.g = { no: S.gameNo, mode: S.mode, sim: S.sim, civ: flip ? w.b : w.a, und: flip ? w.a : w.b, civL: flip ? w.lb : w.la, undL: flip ? w.la : w.lb, roles,
     deal: players.slice(first).concat(players.slice(0, first)), idx: 0, alive: players, turn: 1, order: [],
     sel: null, out: null, guessed: false, guess: "", winner: null, delta: null, scored: false, peek: null, peekBack: null };
   S.g.order = speakOrder();
@@ -286,6 +313,7 @@ app.addEventListener("click", e => {
     case "nu": S.nU = +b.dataset.k; if (S.nU + S.nW > eff().m) S.nW = 0; return render();
     case "nw": S.nW = +b.dataset.k; if (S.nW && S.nU + 1 > eff().m) S.nU = Math.max(0, eff().m - 1); if (!S.nW && !S.nU) S.nU = 1; return render();
     case "mode": S.mode = b.dataset.k; return render();
+    case "sim": S.sim = +b.dataset.k; return render();
     case "ipack": S.ipacks[b.dataset.k] = !S.ipacks[b.dataset.k]; return render();
     case "pack": S.packs[b.dataset.k] = !S.packs[b.dataset.k]; return render();
     case "start": return newGame();
@@ -358,7 +386,7 @@ function start(data) {
   else {
     S = defaults();
     const saved = load(KEY);
-    if (saved) { Object.assign(S, saved); S.ipacks = Object.assign(defaults().ipacks, saved.ipacks); S.example = false; }
+    if (saved) { Object.assign(S, saved); if (!S.sim) S.sim = 4; S.ipacks = Object.assign(defaults().ipacks, saved.ipacks); S.example = false; }
     else {
       // Première visite : reprend les joueurs du Quiz Undercover s'il y en a.
       const quiz = load("jeux.quiz-undercover.v1");

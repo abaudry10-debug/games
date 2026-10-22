@@ -8,6 +8,7 @@ En ligne sur GitHub Pages : https://abaudry10-debug.github.io/games/ (déployé 
 - Mobile d'abord, mais responsive. Couleurs via les tokens de `assets/css/base.css` (thème clair et sombre).
 - Tout le texte visible est en français.
 - Chaque jeu vit dans `jeux/<nom>/` et s'ajoute dans `assets/js/catalogue.js`.
+- Réglage « Taux de ressemblance » (1 très faible à 5 très haut) commun aux deux Undercover : `assets/js/ressemblance.js`. Les données portent leur niveau (3, 4 ou 5) ; les niveaux 1 et 2 sont tirés automatiquement.
 - À chaque changement de fichiers servis : mettre à jour `ASSETS` si besoin et incrémenter `VERSION` dans `sw.js`.
 - Tester en local avec `python3 -m http.server` avant de pousser.
 - Sauf demande contraire, pousser directement sur `main` (pas de PR) pour que le site se mette à jour.

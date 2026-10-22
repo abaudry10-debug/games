@@ -1,22 +1,33 @@
-const QS = Q.map((q, i) => ({ id: "q" + (i + 1), p: q[0], c: q[1], i: q[2] }));
+const QS = Q.map((q, i) => ({ id: "q" + (i + 1), p: q[0], c: q[1], v: { 5: q[2], 4: q[3], 3: q[4] } }));
 const KEY = "jeux.quiz-undercover.v1";
 const app = document.getElementById("app");
 let S, tick = null, lastScreen = null, lock = null;
 
 function defaults() {
   return { screen: "setup", players: ["Léa", "Tom", "Sam", "Inès"], example: true,
-    packs: { classique: true, soiree: true, epice: false }, nImp: 1, custom: [],
+    packs: { classique: true, soiree: true, epice: false }, nImp: 1, sim: 4, custom: [],
     scores: {}, used: [], roundNo: 0, round: null, timerEnd: null, msg: "", arm: "" };
 }
 function load() { try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, packs: S.packs, nImp: S.nImp, custom: S.custom, scores: S.scores, used: S.used, roundNo: S.roundNo })); } catch (e) {}
+  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, packs: S.packs, nImp: S.nImp, sim: S.sim, custom: S.custom, scores: S.scores, used: S.used, roundNo: S.roundNo })); } catch (e) {}
 }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const rand = n => Math.floor(Math.random() * n);
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 const effImp = () => (S.players.length >= 6 ? S.nImp : 1);
-const pool = () => QS.filter(q => S.packs[q.p]).concat(S.custom.map(c => ({ id: "c" + c.id, p: "perso", c: c.c, i: c.i })));
+const pool = () => QS.filter(q => S.packs[q.p]).concat(S.custom.map(c => ({ id: "c" + c.id, p: "perso", c: c.c, v: { 5: c.i, 4: c.i, 3: c.i } })));
+
+// Question de l'imposteur selon le taux de ressemblance.
+// 3 à 5 : variante écrite pour ce niveau ; 2 : une autre question du même paquet ; 1 : une question d'un autre paquet.
+function impostorQuestion(q, all) {
+  const lvl = S.sim;
+  if (lvl >= 3) return q.v[lvl];
+  const others = all.concat(QS).filter(o => o.c !== q.c);
+  let pick = others.filter(o => (lvl === 2 ? o.p === q.p : o.p !== q.p));
+  if (!pick.length) pick = others;
+  return pick.length ? pick[rand(pick.length)].c : q.v[3];
+}
 const qno = q => (q.id[0] === "q" ? "n° " + q.id.slice(1) : "perso");
 
 function head(stamp) {
@@ -64,6 +75,7 @@ const V = {
       <div class="label">Paquets de questions</div>
       <div class="seg">${Object.entries(PACKS).map(([k, v]) => `<button data-a="pack" data-k="${k}" aria-pressed="${!!S.packs[k]}">${v}<span class="count">${QS.filter(q => q.p === k).length}</span></button>`).join("")}</div>
     </section>
+    ${simPicker(S.sim, "questions")}
     <section class="field">
       <div class="label">Nombre d'imposteurs</div>
       <div class="seg">${[1, 2].map(k => `<button data-a="imp" data-k="${k}" aria-pressed="${effImp() === k}" ${k === 2 && n < 6 ? "disabled" : ""}>${k}</button>`).join("")}</div>
@@ -94,6 +106,7 @@ const V = {
           <li>On révèle toutes les réponses. La vraie question reste masquée : affichez-la si vous voulez, ou jouez seulement avec les votes. L'imposteur doit bluffer pour justifier son choix.</li>
           <li>Débat, puis le groupe accuse un seul joueur.</li>
         </ol>
+        <p><strong>Taux de ressemblance :</strong> de « très faible » (la question de l'imposteur n'a rien à voir) à « très haut » (presque la même question, on désigne souvent la même personne).</p>
         <p><strong>Points :</strong> imposteur démasqué, chaque innocent marque 1 point. Imposteur qui s'en sort, il marque 2 points.</p>
       </div>
     </details>`;
@@ -192,8 +205,9 @@ function newRound() {
   const all = pool(); if (S.players.length < 3 || !all.length) return;
   let fresh = all.filter(q => !S.used.includes(q.id));
   if (!fresh.length) { S.used = S.used.filter(id => !all.some(q => q.id === id)); fresh = all; }
-  const q = fresh[rand(fresh.length)];
-  S.used.push(q.id);
+  const base = fresh[rand(fresh.length)];
+  S.used.push(base.id);
+  const q = { id: base.id, p: base.p, c: base.c, i: impostorQuestion(base, all) };
   const players = S.players.slice(), first = S.roundNo % players.length;
   S.roundNo += 1;
   S.round = { q, imps: shuffle(players).slice(0, effImp()), order: players.slice(first).concat(players.slice(0, first)),
@@ -221,6 +235,7 @@ app.addEventListener("click", e => {
     case "rm": S.players.splice(+b.dataset.i, 1); S.example = false; S.msg = ""; save(); return render();
     case "pack": S.packs[b.dataset.k] = !S.packs[b.dataset.k]; save(); return render();
     case "imp": S.nImp = +b.dataset.k; save(); return render();
+    case "sim": S.sim = +b.dataset.k; save(); return render();
     case "start": return newRound();
     case "reset":
       if (S.arm === "reset") { S.scores = {}; S.roundNo = 0; S.arm = ""; save(); } else S.arm = "reset";
@@ -271,7 +286,7 @@ function start(data) {
   else {
     S = defaults();
     const saved = load();
-    if (saved) { Object.assign(S, saved); S.example = false; }
+    if (saved) { Object.assign(S, saved); if (!S.sim) S.sim = 4; S.example = false; }
   }
   render();
 }

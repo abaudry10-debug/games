@@ -29,16 +29,18 @@ manifest.webmanifest       Nom et icône de l'app installée
 ## Ajouter des questions au Quiz Undercover
 
 Éditez `jeux/quiz-undercover/questions.js` : une ligne par question, au format
-`["paquet", "question de l'équipe", "question de l'imposteur"]`.
+`["paquet", "question de l'équipe", "imposteur très haut", "imposteur haut", "imposteur moyen"]`
+(trois questions d'imposteur, de la plus proche à la plus éloignée, selon le taux de ressemblance choisi).
 Les paquets disponibles sont `classique`, `soiree` et `epice`.
 
 ## Ajouter des mots à l'Undercover
 
-Éditez `jeux/undercover/mots.js` : une ligne par paire, au format `["paquet", "mot", "mot proche"]`.
+Éditez `jeux/undercover/mots.js` : une ligne par paire, au format `["paquet", "thème", "mot", "mot proche", niveau]`,
+avec niveau = 5 (très haut, quasi identiques), 4 (haut) ou 3 (moyen). Les niveaux faible et très faible sont tirés automatiquement.
 Les paquets disponibles sont `classique`, `soiree` et `culture`.
 
 Pour le mode Images, ajoutez une ligne dans `jeux/undercover/images.js` :
-`["paquet", "URL de vignette upload.wikimedia.org", "nom", "URL", "nom"]` (paquets `perso`, `lieux` et `situations`).
+`["paquet", "URL de vignette upload.wikimedia.org", "nom", "URL", "nom", niveau]` (paquets `perso`, `lieux` et `situations`, niveau 3 à 5).
 N'utilisez que des photos sous licence libre de Wikimedia Commons : `credits.html` affiche leurs auteurs.
 
 ## Ajouter un nouveau jeu

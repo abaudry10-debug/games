@@ -100,3 +100,12 @@ a.game:hover { border-color: var(--ink); }
 .game.soon h2 { color: var(--muted); }
 .foot { font-family: var(--f-mono); font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* Réglage « Taux de ressemblance » (assets/js/ressemblance.js) */
+.seg.sim button { flex: 1 1 auto; justify-content: center; align-items: center; padding: 10px 12px; }
+.sim-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
+.sim-bars i { width: 4px; border-radius: 1px; background: currentColor; opacity: .25; }
+.sim-bars i:nth-child(1) { height: 5px; } .sim-bars i:nth-child(2) { height: 7px; } .sim-bars i:nth-child(3) { height: 9px; } .sim-bars i:nth-child(4) { height: 11px; } .sim-bars i:nth-child(5) { height: 14px; }
+.sim-bars i.on { opacity: 1; }
+.sim-desc { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--stamp); border-radius: 6px; padding: 12px 14px; font-size: 15px; }
+.sim-desc span { color: var(--muted); }
