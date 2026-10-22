@@ -86,7 +86,7 @@ const V = {
     <section class="field">
       <div class="label">Mode de jeu</div>
       <div class="seg">${[["mots", "Mots"], ["images", "Images"]].map(([k, l]) => `<button data-a="mode" data-k="${k}" aria-pressed="${S.mode === k}">${l}</button>`).join("")}</div>
-      <p class="note">${img ? "Chacun reçoit une image, l'undercover une image proche." : "Chacun reçoit un mot, l'undercover un mot proche."}</p>
+      <p class="note">${img ? "Chacun reçoit une photo, l'undercover une photo proche." : "Chacun reçoit un mot, l'undercover un mot proche."}</p>
     </section>
     <section class="field">
       <div class="label">Undercovers</div>
@@ -129,7 +129,7 @@ const V = {
           <li>Débat, puis vote : le joueur éliminé révèle son rôle. Si c'est Mr White, il peut deviner le mot des civils pour gagner.</li>
           <li>On recommence jusqu'à la victoire d'un camp. Les civils gagnent quand tous les imposteurs sont éliminés. Les imposteurs gagnent s'il ne reste plus qu'un civil.</li>
         </ol>
-        <p><strong>Mode Images :</strong> même principe avec des images. Chacun décrit son image sans la nommer, et Mr White doit deviner l'image des civils. Les images sont des illustrations dessinées pour le jeu.</p>
+        <p><strong>Mode Images :</strong> même principe avec des images. Chacun décrit son image sans la nommer, et Mr White doit deviner l'image des civils. Les photos viennent de Wikimedia Commons (<a href="credits.html">auteurs et licences</a>). Il faut Internet la première fois, ensuite elles restent sur le téléphone.</p>
         <p>Un joueur a oublié son mot ou son image ? Bouton « Revoir » pendant la partie.</p>
         <p><strong>Points :</strong> victoire des civils, 2 points par civil. Victoire des imposteurs, 10 points par undercover et 6 points pour Mr White s'il est encore en jeu. Mr White qui trouve le mot marque 6 points.</p>
       </div>
@@ -253,7 +253,7 @@ function newGame() {
     deal: players.slice(first).concat(players.slice(0, first)), idx: 0, alive: players, turn: 1, order: [],
     sel: null, out: null, guessed: false, guess: "", winner: null, delta: null, scored: false, peek: null, peekBack: null };
   S.g.order = speakOrder();
-  if (S.g.mode === "images") [S.g.civ, S.g.und].forEach(src => { new Image().src = src; });
+  if (S.g.mode === "images") [S.g.civ, S.g.und].forEach(src => { const i = new Image(); i.onerror = () => { i.onerror = null; i.src = original(src); }; i.src = src; });
   S.screen = "pass"; S.arm = ""; S.msg = "";
   wake(); render();
 }
@@ -320,6 +320,13 @@ app.addEventListener("click", e => {
   }
 });
 
+// Vignette absente sur Wikimedia (photo d'origine trop petite) : on charge l'original.
+const original = src => src.replace("/thumb/", "/").replace(/\/[^/]+$/, "");
+app.addEventListener("error", e => {
+  const img = e.target;
+  if (img.tagName === "IMG" && img.src.includes("/thumb/") && !img.dataset.fallback) { img.dataset.fallback = "1"; img.src = original(img.src); }
+}, true);
+
 app.addEventListener("toggle", e => { if (e.target.id === "customBox") S.openCustom = e.target.open; }, true);
 
 app.addEventListener("submit", e => {
@@ -358,7 +365,7 @@ function start(data) {
       if (quiz && quiz.players && quiz.players.length) { S.players = quiz.players.slice(0, 20); S.example = false; }
     }
     // Partie en cours de l'ancien mode Images (emojis) : abandonnée.
-    if (S.g && S.g.mode === "images" && !/\.(svg|webp|jpe?g|png)$/.test(S.g.civ)) S.g = null;
+    if (S.g && S.g.mode === "images" && !/^https:\/\/upload\.wikimedia\.org\//.test(S.g.civ)) S.g = null;
     // Ne jamais rouvrir l'application sur un mot affiché.
     if (!S.g) S.screen = "setup";
     else if (S.screen === "word") S.screen = "pass";

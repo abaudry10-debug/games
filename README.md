@@ -20,8 +20,8 @@ jeux/quiz-undercover/      Premier jeu
   style.css                Styles propres au jeu
 jeux/undercover/           Undercover classique (civils, undercovers, Mr White)
   mots.js                  Banque de paires de mots (à enrichir librement)
-  images.js                Banque de paires d'images du mode Images
-  img/                     Illustrations du mode Images (SVG)
+  images.js                Banque de paires de photos du mode Images (Wikimedia Commons)
+  credits.html             Auteurs et licences des photos
 sw.js                      Service worker (cache hors ligne)
 manifest.webmanifest       Nom et icône de l'app installée
 ```
@@ -37,8 +37,9 @@ Les paquets disponibles sont `classique`, `soiree` et `epice`.
 Éditez `jeux/undercover/mots.js` : une ligne par paire, au format `["paquet", "mot", "mot proche"]`.
 Les paquets disponibles sont `classique`, `soiree` et `culture`.
 
-Pour le mode Images, déposez deux images dans `jeux/undercover/img/` puis ajoutez une ligne dans `jeux/undercover/images.js` :
-`["paquet", "img/a.svg", "nom", "img/b.svg", "nom"]` (paquets `lieux` et `situations`).
+Pour le mode Images, ajoutez une ligne dans `jeux/undercover/images.js` :
+`["paquet", "URL de vignette upload.wikimedia.org", "nom", "URL", "nom"]` (paquets `perso`, `lieux` et `situations`).
+N'utilisez que des photos sous licence libre de Wikimedia Commons : `credits.html` affiche leurs auteurs.
 
 ## Ajouter un nouveau jeu
 

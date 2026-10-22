@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Crédits photos · Undercover</title>
+<meta name="theme-color" content="#15203A">
+<link rel="icon" type="image/png" href="../../assets/icons/icon-192.png">
+<link rel="stylesheet" href="../../assets/css/base.css">
+<style>
+  .credits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .credits li { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 14px; color: var(--muted); }
+  .credits img { width: 56px; height: 56px; object-fit: cover; border-radius: 4px; background: var(--line); }
+  .credits strong { color: var(--ink); display: block; }
+  .credits a { overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<main class="sheet">
+  <header class="head"><div class="head-l"><a class="back" href="./">← Retour au jeu</a><div class="brand">Crédits<br><em>photos</em></div></div></header>
+  <p class="note">Les photos du mode Images sont l'image principale des articles Wikipédia correspondants, hébergées sur Wikimedia Commons sous licence libre. Elles sont affichées réduites. Auteur et licence de chacune ci-dessous, avec un lien vers sa page d'origine.</p>
+  <ol class="credits" id="list"></ol>
+</main>
+<script src="images.js"></script>
+<script>
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const file = src => decodeURIComponent(src.split("/").slice(-2)[0]);
+  const items = IMG.flatMap(m => [[m[1], m[2]], [m[3], m[4]]]).sort((a, b) => a[1].localeCompare(b[1], "fr"));
+  document.getElementById("list").innerHTML = items.map(([src, name]) => {
+    const f = file(src);
+    return `<li data-f="${esc(f)}"><img src="${esc(src)}" alt="" loading="lazy"><div><strong>${esc(name)}</strong>
+      <a href="https://commons.wikimedia.org/wiki/File:${encodeURIComponent(f)}">${esc(f.replace(/_/g, " "))}</a><br><span class="meta">Auteur et licence sur la page d'origine.</span></div></li>`;
+  }).join("");
+  // Complète auteur et licence depuis l'API de Wikimedia Commons (si le réseau est disponible).
+  const files = items.map(([src]) => file(src));
+  for (let i = 0; i < files.length; i += 40) {
+    const titles = files.slice(i, i + 40).map(f => "File:" + f).join("|");
+    fetch("https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&origin=*&prop=imageinfo&iiprop=extmetadata&iiextmetadatafilter=Artist|LicenseShortName&titles=" + encodeURIComponent(titles))
+      .then(r => r.json()).then(j => {
+        const norm = {}; (j.query.normalized || []).forEach(n => { norm[n.to] = n.from; });
+        j.query.pages.forEach(pg => {
+          const f = (norm[pg.title] || pg.title).slice(5), m = ((pg.imageinfo || [])[0] || {}).extmetadata || {};
+          const tmp = document.createElement("div"); tmp.innerHTML = (m.Artist || {}).value || "";
+          const who = tmp.textContent.trim().replace(/\s+/g, " ") || "Auteur non indiqué", lic = (m.LicenseShortName || {}).value || "";
+          document.querySelectorAll(`li[data-f="${CSS.escape(f)}"] .meta`).forEach(el => { el.textContent = who + (lic ? " · " + lic : ""); });
+        });
+      }).catch(() => {});
+  }
+</script>
+</body>
+</html>
