@@ -29,6 +29,22 @@ function scoreList(delta) {
   return `<ol class="scores">${rows.map((r, i) => `<li><span class="rk">${i + 1}</span><span class="nm">${esc(r.p)}</span><span class="dl">${r.d ? "+" + r.d : ""}</span><span class="pt">${r.s} pt${r.s > 1 ? "s" : ""}</span></li>`).join("")}</ol>`;
 }
 
+// Question masquée par défaut : floutée sous un tampon « Confidentiel », on choisit de l'afficher ou de jouer seulement avec les votes.
+const LOCK = `<svg class="veil-lock" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none"/></svg>`;
+function veiled(label, inner, note, final) {
+  const r = S.round, open = r.showQ, anim = r.anim;
+  r.anim = false;
+  return `<section class="box"><div class="label">${label}</div>
+    <div class="veil${open ? " open" : ""}${anim ? " anim" : ""}">
+      <div class="veil-body"${open ? "" : ` aria-hidden="true"`}>${inner}</div>
+      ${open ? "" : `<div class="veil-cover">${LOCK}<span class="veil-stamp">Confidentiel</span>
+        <button class="btn red" data-a="showq">${final ? "Afficher les questions" : "Afficher la question"}</button>
+        ${final ? "" : `<span class="veil-hint">ou jouez seulement avec les votes</span>`}</div>`}
+    </div>
+    ${note ? `<p class="note">${note}</p>` : ""}
+    ${open ? `<button class="btn ghost quiet" data-a="hideq">${final ? "Masquer les questions" : "Masquer la question"}</button>` : ""}</section>`;
+}
+
 const V = {
   setup() {
     const n = S.players.length, canStart = n >= 3 && pool().length > 0;
@@ -75,7 +91,7 @@ const V = {
         <ol>
           <li>Chacun reçoit en secret une question sur le groupe et désigne un joueur (on peut se désigner soi-même).</li>
           <li>L'imposteur a reçu une question différente, mais il ne le sait pas encore.</li>
-          <li>On révèle la vraie question et toutes les réponses. L'imposteur comprend qu'il est démasquable et doit bluffer pour justifier son choix.</li>
+          <li>On révèle toutes les réponses. La vraie question reste masquée : affichez-la si vous voulez, ou jouez seulement avec les votes. L'imposteur doit bluffer pour justifier son choix.</li>
           <li>Débat, puis le groupe accuse un seul joueur.</li>
         </ol>
         <p><strong>Points :</strong> imposteur démasqué, chaque innocent marque 1 point. Imposteur qui s'en sort, il marque 2 points.</p>
@@ -110,8 +126,8 @@ const V = {
     r.order.forEach(p => { const a = r.answers[p]; counts[a] = (counts[a] || 0) + 1; });
     const rows = Object.entries(counts).sort((a, b) => b[1] - a[1]), max = rows[0][1];
     return `${head("Pièces à conviction")}
-    <section class="box"><div class="label">La vraie question</div><p class="question">${esc(r.q.c)}</p>
-      <p class="note">${r.imps.length > 1 ? "Deux d'entre vous avaient" : "L'un d'entre vous avait"} une autre question. À vous de ${r.imps.length > 1 ? "les" : "le"} démasquer.</p></section>
+    ${veiled("La vraie question", `<p class="question">${esc(r.q.c)}</p>`,
+      `${r.imps.length > 1 ? "Deux d'entre vous avaient" : "L'un d'entre vous avait"} une autre question. À vous de ${r.imps.length > 1 ? "les" : "le"} démasquer.`)}
     <section class="field"><div class="label">Les réponses</div>
       <div class="answers">${r.order.map(p => `<div class="ans"><span>${esc(p)}</span><span class="arrow">a désigné</span><strong>${esc(r.answers[p])}</strong></div>`).join("")}</div></section>
     <section class="field"><div class="label">Décompte</div>
@@ -138,7 +154,7 @@ const V = {
     return `${head("Verdict")}
     <div class="verdict-wrap"><div class="verdict">${caught ? "Démasqué" : "Raté"}</div></div>
     <p class="lead center">${line}</p>
-    <section class="box"><div class="label">La question de l'imposteur</div><p class="question sm">${esc(r.q.i)}</p></section>
+    ${veiled("Les questions", `<p class="question sm">${esc(r.q.c)}</p><div class="label">Question de l'imposteur</div><p class="question sm">${esc(r.q.i)}</p>`, "", true)}
     <section class="box"><div class="label">Classement après la manche ${r.no}</div>${scoreList(r.delta)}</section>
     <button class="btn big red" data-a="start">Manche suivante</button>
     <button class="btn ghost" data-a="menu">Retour au menu</button>`;
@@ -181,7 +197,7 @@ function newRound() {
   const players = S.players.slice(), first = S.roundNo % players.length;
   S.roundNo += 1;
   S.round = { q, imps: shuffle(players).slice(0, effImp()), order: players.slice(first).concat(players.slice(0, first)),
-    idx: 0, answers: {}, sel: null, accused: null, scored: false, delta: null, no: S.roundNo };
+    idx: 0, answers: {}, sel: null, accused: null, scored: false, delta: null, no: S.roundNo, showQ: false, anim: false };
   S.screen = "pass"; S.timerEnd = null; S.arm = ""; S.msg = "";
   save(); wake(); render();
 }
@@ -219,6 +235,8 @@ app.addEventListener("click", e => {
       r.answers[r.order[r.idx]] = r.sel; r.sel = null; r.idx += 1;
       S.screen = r.idx < r.order.length ? "pass" : "done"; return render();
     case "reveal": S.screen = "reveal"; return render();
+    case "showq": r.showQ = true; r.anim = true; return render();
+    case "hideq": r.showQ = false; return render();
     case "timer": S.timerEnd = Date.now() + (+b.dataset.s) * 1000; return render();
     case "tovote": S.screen = "vote"; return render();
     case "back": S.screen = "reveal"; return render();
