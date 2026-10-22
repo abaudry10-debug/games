@@ -20,6 +20,7 @@ jeux/quiz-undercover/      Premier jeu
   style.css                Styles propres au jeu
 jeux/undercover/           Undercover classique (civils, undercovers, Mr White)
   mots.js                  Banque de paires de mots (à enrichir librement)
+  images.js                Banque de paires d'images (emojis) du mode Images
 sw.js                      Service worker (cache hors ligne)
 manifest.webmanifest       Nom et icône de l'app installée
 ```
@@ -34,6 +35,8 @@ Les paquets disponibles sont `classique`, `soiree` et `epice`.
 
 Éditez `jeux/undercover/mots.js` : une ligne par paire, au format `["paquet", "mot", "mot proche"]`.
 Les paquets disponibles sont `classique`, `soiree` et `culture`.
+
+Pour le mode Images, éditez `jeux/undercover/images.js` : `["emoji", "nom", "emoji proche", "nom"]`.
 
 ## Ajouter un nouveau jeu
 

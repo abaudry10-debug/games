@@ -1,6 +1,6 @@
 // Service worker : réseau d'abord, cache en secours (mode hors ligne).
 // Après l'ajout d'un jeu, ajoutez ses fichiers à ASSETS et changez VERSION.
-const VERSION = "v3";
+const VERSION = "v4";
 const CACHE = "jeux-entre-potes-" + VERSION;
 const ASSETS = [
   "./", "index.html", "manifest.webmanifest",
@@ -9,7 +9,7 @@ const ASSETS = [
   "jeux/quiz-undercover/", "jeux/quiz-undercover/index.html", "jeux/quiz-undercover/style.css",
   "jeux/quiz-undercover/questions.js", "jeux/quiz-undercover/game.js",
   "jeux/undercover/", "jeux/undercover/index.html", "jeux/undercover/style.css",
-  "jeux/undercover/mots.js", "jeux/undercover/game.js"
+  "jeux/undercover/mots.js", "jeux/undercover/images.js", "jeux/undercover/game.js"
 ];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS))); self.skipWaiting(); });
 self.addEventListener("activate", e => {

@@ -37,3 +37,5 @@
 .order li::marker { font-family: var(--f-mono); font-weight: 500; color: var(--muted); }
 .verdict { text-align: center; font-size: clamp(28px, 9vw, 48px); max-width: 100%; overflow-wrap: anywhere; }
 .verdict-wrap { overflow-x: clip; }
+.pic { margin: 0; font-size: clamp(110px, 38vw, 180px); line-height: 1.1; text-align: center; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+.pic-sm { font-size: 1.4em; vertical-align: -.15em; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
