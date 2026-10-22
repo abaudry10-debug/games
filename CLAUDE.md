@@ -14,3 +14,4 @@ En ligne sur GitHub Pages : https://abaudry10-debug.github.io/games/ (déployé 
 
 ## Jeux
 - `jeux/quiz-undercover/` : chacun désigne un joueur en réponse à une question ; l'imposteur a reçu une question proche mais différente. Questions dans `questions.js`.
+- `jeux/undercover/` : Undercover classique (civils, undercovers, Mr White), avec « Revoir mon mot » en cours de partie. Paires de mots dans `mots.js`.

@@ -10,9 +10,10 @@ const GAMES = [
     facts: ["3 à 12 joueurs", "1 téléphone", "Bluff", "≈ 5 min / manche"]
   },
   {
-    title: "Prochain jeu",
-    emblem: "…",
-    pitch: "En préparation.",
-    facts: ["Bientôt"]
+    title: "Undercover",
+    emblem: "≠",
+    path: "jeux/undercover/",
+    pitch: "Tout le monde a le même mot… sauf les undercovers, qui ont un mot proche, et Mr White, qui n'en a aucun. Un indice chacun, puis on vote pour éliminer.",
+    facts: ["3 à 20 joueurs", "1 téléphone", "Bluff", "≈ 10 min / partie"]
   }
 ];
