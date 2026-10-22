@@ -86,7 +86,7 @@ const V = {
     <section class="field">
       <div class="label">Mode de jeu</div>
       <div class="seg">${[["mots", "Mots"], ["images", "Images"]].map(([k, l]) => `<button data-a="mode" data-k="${k}" aria-pressed="${S.mode === k}">${l}</button>`).join("")}</div>
-      <p class="note">${img ? "Chacun reçoit une photo, l'undercover une photo proche." : "Chacun reçoit un mot, l'undercover un mot proche."}</p>
+      <p class="note">${img ? "Chacun reçoit une image, l'undercover une image proche." : "Chacun reçoit un mot, l'undercover un mot proche."}</p>
     </section>
     <section class="field">
       <div class="label">Undercovers</div>
@@ -98,14 +98,14 @@ const V = {
       <p class="note">${n >= 3 ? `${n - e.u - e.w} civil${n - e.u - e.w > 1 ? "s" : ""}, ${e.u} undercover${e.u > 1 ? "s" : ""}${e.w ? " et 1 Mr White" : ""}. ` : ""}Les civils doivent rester plus nombreux que les imposteurs.</p>
     </section>
     ${img ? `<section class="field">
-      <div class="label">Paquets de photos</div>
+      <div class="label">Paquets d'images</div>
       <div class="seg">${Object.entries(IMG_PACKS).map(([k, v]) => `<button data-a="ipack" data-k="${k}" aria-pressed="${!!S.ipacks[k]}">${v}<span class="count">${IS.filter(w => w.p === k).length}</span></button>`).join("")}</div>
     </section>` : `<section class="field">
       <div class="label">Paquets de mots</div>
       <div class="seg">${Object.entries(PACKS).map(([k, v]) => `<button data-a="pack" data-k="${k}" aria-pressed="${!!S.packs[k]}">${v}<span class="count">${WS.filter(w => w.p === k).length}</span></button>`).join("")}</div>
     </section>`}
     <button class="btn big red" data-a="start" ${canStart ? "" : "disabled"}>Distribuer les ${img ? "images" : "mots"}</button>
-    ${n < 3 ? `<p class="note center">Il faut au moins 3 joueurs.</p>` : !pool().length ? `<p class="note center">Activez au moins un paquet de ${img ? "photos" : "mots"}.</p>` : ""}
+    ${n < 3 ? `<p class="note center">Il faut au moins 3 joueurs.</p>` : !pool().length ? `<p class="note center">Activez au moins un paquet ${img ? "d'images" : "de mots"}.</p>` : ""}
     ${hasScores ? `<section class="box"><div class="label">Classement</div>${scoreList()}
       <button class="btn ghost quiet" data-a="reset">${S.arm === "reset" ? "Confirmer la remise à zéro" : "Remettre les scores à zéro"}</button></section>` : ""}
     ${img ? "" : `<details id="customBox" ${S.openCustom ? "open" : ""}>
@@ -129,7 +129,7 @@ const V = {
           <li>Débat, puis vote : le joueur éliminé révèle son rôle. Si c'est Mr White, il peut deviner le mot des civils pour gagner.</li>
           <li>On recommence jusqu'à la victoire d'un camp. Les civils gagnent quand tous les imposteurs sont éliminés. Les imposteurs gagnent s'il ne reste plus qu'un civil.</li>
         </ol>
-        <p><strong>Mode Images :</strong> même principe avec des photos. Chacun décrit sa photo sans la nommer, et Mr White doit deviner l'image des civils. Photos issues de Wikimedia Commons : <a href="credits.html">crédits et licences</a>.</p>
+        <p><strong>Mode Images :</strong> même principe avec des images. Chacun décrit son image sans la nommer, et Mr White doit deviner l'image des civils. Les images sont des illustrations dessinées pour le jeu.</p>
         <p>Un joueur a oublié son mot ou son image ? Bouton « Revoir » pendant la partie.</p>
         <p><strong>Points :</strong> victoire des civils, 2 points par civil. Victoire des imposteurs, 10 points par undercover et 6 points pour Mr White s'il est encore en jeu. Mr White qui trouve le mot marque 6 points.</p>
       </div>
@@ -358,7 +358,7 @@ function start(data) {
       if (quiz && quiz.players && quiz.players.length) { S.players = quiz.players.slice(0, 20); S.example = false; }
     }
     // Partie en cours de l'ancien mode Images (emojis) : abandonnée.
-    if (S.g && S.g.mode === "images" && !/\.(webp|jpe?g|png)$/.test(S.g.civ)) S.g = null;
+    if (S.g && S.g.mode === "images" && !/\.(svg|webp|jpe?g|png)$/.test(S.g.civ)) S.g = null;
     // Ne jamais rouvrir l'application sur un mot affiché.
     if (!S.g) S.screen = "setup";
     else if (S.screen === "word") S.screen = "pass";
