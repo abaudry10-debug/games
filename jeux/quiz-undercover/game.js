@@ -106,6 +106,7 @@ const V = {
           <li>On révèle toutes les réponses. La vraie question reste masquée : affichez-la si vous voulez, ou jouez seulement avec les votes. L'imposteur doit bluffer pour justifier son choix.</li>
           <li>Débat, puis le groupe accuse un seul joueur.</li>
         </ol>
+        <p>Quelqu'un a oublié sa question ? Bouton « Revoir ma question » dès qu'il a répondu, jusqu'au vote.</p>
         <p><strong>Taux de ressemblance :</strong> de « très faible » (la question de l'imposteur n'a rien à voir) à « très haut » (presque la même question, on désigne souvent la même personne).</p>
         <p><strong>Points :</strong> imposteur démasqué, chaque innocent marque 1 point. Imposteur qui s'en sort, il marque 2 points.</p>
       </div>
@@ -118,6 +119,7 @@ const V = {
     <div class="steps">${r.order.map((_, i) => `<i class="${i < r.idx ? "on" : ""}"></i>`).join("")}</div></div>
     <section class="box pass"><div class="label">Passe le téléphone à</div><div class="pass-name">${esc(p)}</div><p class="note">Les autres, regardez ailleurs.</p></section>
     <button class="btn big" data-a="see">C'est moi, voir ma question</button>
+    ${r.idx ? `<button class="btn ghost" data-a="peek">Revoir ma question</button>` : ""}
     <button class="btn ghost quiet" data-a="quit">${S.arm === "quit" ? "Confirmer l'abandon de la manche" : "Abandonner la manche"}</button>`;
   },
   question() {
@@ -132,7 +134,8 @@ const V = {
   done() {
     return `${head("Scellé")}
     <section class="box pass"><div class="label">Tout le monde a répondu</div><p class="lead">Posez le téléphone au milieu de la table.</p></section>
-    <button class="btn big red" data-a="reveal">Révéler les réponses</button>`;
+    <button class="btn big red" data-a="reveal">Révéler les réponses</button>
+    <button class="btn ghost" data-a="peek">Revoir ma question</button>`;
   },
   reveal() {
     const r = S.round, counts = {};
@@ -148,7 +151,8 @@ const V = {
     <section class="box"><div class="label">Temps de débat</div>
       <div class="timer" id="timer">${fmtTimer()}</div>
       <div class="row">${[60, 120, 180].map(s => `<button class="btn ghost" data-a="timer" data-s="${s}">${s / 60} min</button>`).join("")}</div></section>
-    <button class="btn big red" data-a="tovote">Passer au vote</button>`;
+    <button class="btn big red" data-a="tovote">Passer au vote</button>
+    <button class="btn ghost" data-a="peek">Revoir ma question</button>`;
   },
   vote() {
     const r = S.round;
@@ -157,7 +161,29 @@ const V = {
       <p class="note">Mettez-vous d'accord, puis désignez un seul suspect.</p>
       <div class="pick">${S.players.map(n => `<button data-a="acc" data-n="${esc(n)}" aria-pressed="${r.accused === n}">${esc(n)}</button>`).join("")}</div></section>
     <button class="btn big red" data-a="judge" ${r.accused ? "" : "disabled"}>${r.accused ? "Accuser " + esc(r.accused) : "Choisissez un suspect"}</button>
-    <button class="btn ghost quiet" data-a="back">Revoir les réponses</button>`;
+    <button class="btn ghost quiet" data-a="back">Revoir les réponses</button>
+    <button class="btn ghost" data-a="peek">Revoir ma question</button>`;
+  },
+  // « Revoir ma question » : choisir son nom, passer le téléphone, revoir sa question et sa réponse.
+  peekpick() {
+    const r = S.round;
+    return `${head("Trou de mémoire")}
+    <section class="field"><div class="label">Qui veut revoir sa question ?</div>
+      <div class="pick">${r.order.filter(p => p in r.answers).map(n => `<button data-a="peekp" data-n="${esc(n)}">${esc(n)}</button>`).join("")}</div></section>
+    <button class="btn ghost quiet" data-a="peekx">Annuler</button>`;
+  },
+  peekpass() {
+    return `${head("Trou de mémoire")}
+    <section class="box pass"><div class="label">Passe le téléphone à</div><div class="pass-name">${esc(S.round.peek)}</div><p class="note">Les autres, regardez ailleurs.</p></section>
+    <button class="btn big" data-a="peeksee">C'est moi, revoir ma question</button>
+    <button class="btn ghost quiet" data-a="peekx">Annuler</button>`;
+  },
+  peekq() {
+    const r = S.round, p = r.peek;
+    return `${head("Confidentiel")}
+    <section class="box"><div class="label">${esc(p)} · ta question</div><p class="question">${esc(r.imps.includes(p) ? r.q.i : r.q.c)}</p>
+      <p class="note">Tu as désigné <strong>${esc(r.answers[p])}</strong>.</p></section>
+    <button class="btn big red" data-a="peekx">J'ai retenu, cacher</button>`;
   },
   result() {
     const r = S.round, caught = r.imps.includes(r.accused), others = r.imps.filter(p => p !== r.accused);
@@ -242,6 +268,10 @@ app.addEventListener("click", e => {
       return render();
     case "rmc": S.openCustom = true; S.custom = S.custom.filter(c => String(c.id) !== b.dataset.id); S.used = S.used.filter(id => id !== "c" + b.dataset.id); save(); return render();
     case "see": S.screen = "question"; return render();
+    case "peek": r.peekBack = S.screen; S.screen = "peekpick"; return render();
+    case "peekp": r.peek = b.dataset.n; S.screen = "peekpass"; return render();
+    case "peeksee": S.screen = "peekq"; return render();
+    case "peekx": r.peek = null; S.screen = r.peekBack || "reveal"; return render();
     case "quit":
       if (S.arm === "quit") { S.arm = ""; S.round = null; S.screen = "setup"; } else S.arm = "quit";
       return render();

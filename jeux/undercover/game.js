@@ -172,6 +172,7 @@ const V = {
     <div class="steps">${g.deal.map((_, i) => `<i class="${i < g.idx ? "on" : ""}"></i>`).join("")}</div></div>
     ${passBox(p, "Les autres, regardez ailleurs.")}
     <button class="btn big" data-a="see">C'est moi, voir mon ${voc().mot}</button>
+    ${g.idx ? `<button class="btn ghost" data-a="peek">Revoir mon ${voc().mot}</button>` : ""}
     <button class="btn ghost quiet" data-a="quit">${S.arm === "quit" ? "Confirmer l'abandon de la partie" : "Abandonner la partie"}</button>`;
   },
   word() {
@@ -221,7 +222,7 @@ const V = {
   peekpick() {
     return `${head("Trou de mémoire")}
     <section class="field"><div class="label">Qui veut revoir son ${voc().mot} ?</div>
-      <div class="pick">${S.g.alive.map(n => `<button data-a="peekp" data-n="${esc(n)}">${esc(n)}</button>`).join("")}</div></section>
+      <div class="pick">${(S.g.peekBack === "pass" ? S.g.deal.slice(0, S.g.idx) : S.g.alive).map(n => `<button data-a="peekp" data-n="${esc(n)}">${esc(n)}</button>`).join("")}</div></section>
     <button class="btn ghost quiet" data-a="peekx">Annuler</button>`;
   },
   peekpass() {
