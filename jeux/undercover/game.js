@@ -1,5 +1,5 @@
 const WS = W.map((w, i) => ({ id: "w" + (i + 1), p: w[0], a: w[1], b: w[2] }));
-const IS = IMG.map((m, i) => ({ id: "i" + (i + 1), p: "image", a: m[0], la: m[1], b: m[2], lb: m[3] }));
+const IS = IMG.map((m, i) => ({ id: "i" + (i + 1), p: m[0], a: m[1], la: m[2], b: m[3], lb: m[4] }));
 const KEY = "jeux.undercover.v1";
 const ROLE = { c: "Civil", u: "Undercover", w: "Mr White" };
 const PTS = { c: 2, u: 10, w: 6 };
@@ -8,18 +8,18 @@ let S, lastScreen = null, lock = null;
 
 function defaults() {
   return { screen: "setup", players: ["Léa", "Tom", "Sam", "Inès", "Hugo"], example: true,
-    mode: "mots", packs: { classique: true, soiree: true, culture: true }, nU: 1, nW: 1, custom: [],
+    mode: "mots", packs: { classique: true, soiree: true, culture: true }, ipacks: { perso: true, lieux: true, situations: true }, nU: 1, nW: 1, custom: [],
     scores: {}, used: [], gameNo: 0, g: null, msg: "", arm: "" };
 }
 function load(key) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, mode: S.mode, packs: S.packs, nU: S.nU, nW: S.nW, custom: S.custom,
+  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, mode: S.mode, packs: S.packs, ipacks: S.ipacks, nU: S.nU, nW: S.nW, custom: S.custom,
     scores: S.scores, used: S.used, gameNo: S.gameNo, g: S.g, screen: S.screen })); } catch (e) {}
 }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const rand = n => Math.floor(Math.random() * n);
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-const pool = () => S.mode === "images" ? IS : WS.filter(w => S.packs[w.p]).concat(S.custom.map(c => ({ id: "c" + c.id, p: "perso", a: c.a, b: c.b })));
+const pool = () => S.mode === "images" ? IS.filter(w => S.ipacks[w.p]) : WS.filter(w => S.packs[w.p]).concat(S.custom.map(c => ({ id: "c" + c.id, p: "perso", a: c.a, b: c.b })));
 
 // Les civils doivent rester majoritaires : au plus (n - 1) / 2 imposteurs, Mr White compris.
 function eff() {
@@ -58,7 +58,7 @@ function secret(p) {
   const g = S.g, v = voc(), u = g.roles[p] === "u";
   if (g.roles[p] === "w") return `<section class="box"><div class="label">${esc(p)} · ton rôle</div><p class="word">Mr White</p>
     <p class="note">Tu n'as pas ${v.mot === "mot" ? "de mot" : "d'image"}. Écoute les autres, bluffe, et si tu es éliminé tu pourras tenter de deviner ${v.civ}.</p></section>`;
-  const shown = g.mode === "images" ? `<p class="pic" role="img" aria-label="${esc(u ? g.undL : g.civL)}">${u ? g.und : g.civ}</p>`
+  const shown = g.mode === "images" ? `<img class="photo" src="${esc(u ? g.und : g.civ)}" alt="${esc(u ? g.undL : g.civL)}">`
     : `<p class="word">${esc(u ? g.und : g.civ)}</p>`;
   return `<section class="box"><div class="label">${esc(p)} · ton ${v.mot}</div>${shown}
     <p class="note">Retiens-${v.le} bien. Tu ne sais pas si tu es civil ou undercover.</p></section>`;
@@ -86,7 +86,7 @@ const V = {
     <section class="field">
       <div class="label">Mode de jeu</div>
       <div class="seg">${[["mots", "Mots"], ["images", "Images"]].map(([k, l]) => `<button data-a="mode" data-k="${k}" aria-pressed="${S.mode === k}">${l}</button>`).join("")}</div>
-      <p class="note">${img ? `Chacun reçoit une image, l'undercover une image proche. ${IS.length} paires d'images.` : "Chacun reçoit un mot, l'undercover un mot proche."}</p>
+      <p class="note">${img ? "Chacun reçoit une photo, l'undercover une photo proche." : "Chacun reçoit un mot, l'undercover un mot proche."}</p>
     </section>
     <section class="field">
       <div class="label">Undercovers</div>
@@ -97,12 +97,15 @@ const V = {
       <div class="seg">${[0, 1].map(k => `<button data-a="nw" data-k="${k}" aria-pressed="${e.w === k}" ${k === 1 && e.m < 1 ? "disabled" : ""}>${k ? "Avec" : "Sans"}</button>`).join("")}</div>
       <p class="note">${n >= 3 ? `${n - e.u - e.w} civil${n - e.u - e.w > 1 ? "s" : ""}, ${e.u} undercover${e.u > 1 ? "s" : ""}${e.w ? " et 1 Mr White" : ""}. ` : ""}Les civils doivent rester plus nombreux que les imposteurs.</p>
     </section>
-    ${img ? "" : `<section class="field">
+    ${img ? `<section class="field">
+      <div class="label">Paquets de photos</div>
+      <div class="seg">${Object.entries(IMG_PACKS).map(([k, v]) => `<button data-a="ipack" data-k="${k}" aria-pressed="${!!S.ipacks[k]}">${v}<span class="count">${IS.filter(w => w.p === k).length}</span></button>`).join("")}</div>
+    </section>` : `<section class="field">
       <div class="label">Paquets de mots</div>
       <div class="seg">${Object.entries(PACKS).map(([k, v]) => `<button data-a="pack" data-k="${k}" aria-pressed="${!!S.packs[k]}">${v}<span class="count">${WS.filter(w => w.p === k).length}</span></button>`).join("")}</div>
     </section>`}
     <button class="btn big red" data-a="start" ${canStart ? "" : "disabled"}>Distribuer les ${img ? "images" : "mots"}</button>
-    ${n < 3 ? `<p class="note center">Il faut au moins 3 joueurs.</p>` : !pool().length ? `<p class="note center">Activez au moins un paquet de mots.</p>` : ""}
+    ${n < 3 ? `<p class="note center">Il faut au moins 3 joueurs.</p>` : !pool().length ? `<p class="note center">Activez au moins un paquet de ${img ? "photos" : "mots"}.</p>` : ""}
     ${hasScores ? `<section class="box"><div class="label">Classement</div>${scoreList()}
       <button class="btn ghost quiet" data-a="reset">${S.arm === "reset" ? "Confirmer la remise à zéro" : "Remettre les scores à zéro"}</button></section>` : ""}
     ${img ? "" : `<details id="customBox" ${S.openCustom ? "open" : ""}>
@@ -126,7 +129,7 @@ const V = {
           <li>Débat, puis vote : le joueur éliminé révèle son rôle. Si c'est Mr White, il peut deviner le mot des civils pour gagner.</li>
           <li>On recommence jusqu'à la victoire d'un camp. Les civils gagnent quand tous les imposteurs sont éliminés. Les imposteurs gagnent s'il ne reste plus qu'un civil.</li>
         </ol>
-        <p><strong>Mode Images :</strong> même principe avec des images. Chacun décrit son image sans la nommer, et Mr White doit deviner l'image des civils.</p>
+        <p><strong>Mode Images :</strong> même principe avec des photos. Chacun décrit sa photo sans la nommer, et Mr White doit deviner l'image des civils. Photos issues de Wikimedia Commons : <a href="credits.html">crédits et licences</a>.</p>
         <p>Un joueur a oublié son mot ou son image ? Bouton « Revoir » pendant la partie.</p>
         <p><strong>Points :</strong> victoire des civils, 2 points par civil. Victoire des imposteurs, 10 points par undercover et 6 points pour Mr White s'il est encore en jeu. Mr White qui trouve le mot marque 6 points.</p>
       </div>
@@ -210,7 +213,7 @@ const V = {
     <div class="verdict-wrap"><div class="verdict">${title}</div></div>
     <p class="lead center">${line}</p>
     <section class="box"><div class="label">Les ${voc().mots}</div>
-      <div class="answers">${[["Civils", g.civ, g.civL], ["Undercover", g.und, g.undL]].map(([k, w, l]) => `<div class="ans"><span>${k}</span><strong>${g.mode === "images" ? `<span class="pic-sm" aria-hidden="true">${w}</span> ${esc(l)}` : esc(w)}</strong></div>`).join("")}</div></section>
+      <div class="answers">${[["Civils", g.civ, g.civL], ["Undercover", g.und, g.undL]].map(([k, w, l]) => `<div class="ans"><span>${k}</span><strong>${g.mode === "images" ? `<img class="thumb" src="${esc(w)}" alt=""> ${esc(l)}` : esc(w)}</strong></div>`).join("")}</div></section>
     <section class="field"><div class="label">Les rôles</div>
       <div class="answers">${S.players.map(p => `<div class="ans"><span>${esc(p)}${g.alive.includes(p) ? "" : ` <small class="note">éliminé</small>`}</span><strong>${ROLE[g.roles[p]]}</strong></div>`).join("")}</div></section>
     <section class="box"><div class="label">Classement après la partie ${g.no}</div>${scoreList(g.delta)}</section>
@@ -250,6 +253,7 @@ function newGame() {
     deal: players.slice(first).concat(players.slice(0, first)), idx: 0, alive: players, turn: 1, order: [],
     sel: null, out: null, guessed: false, guess: "", winner: null, delta: null, scored: false, peek: null, peekBack: null };
   S.g.order = speakOrder();
+  if (S.g.mode === "images") [S.g.civ, S.g.und].forEach(src => { new Image().src = src; });
   S.screen = "pass"; S.arm = ""; S.msg = "";
   wake(); render();
 }
@@ -282,6 +286,7 @@ app.addEventListener("click", e => {
     case "nu": S.nU = +b.dataset.k; if (S.nU + S.nW > eff().m) S.nW = 0; return render();
     case "nw": S.nW = +b.dataset.k; if (S.nW && S.nU + 1 > eff().m) S.nU = Math.max(0, eff().m - 1); if (!S.nW && !S.nU) S.nU = 1; return render();
     case "mode": S.mode = b.dataset.k; return render();
+    case "ipack": S.ipacks[b.dataset.k] = !S.ipacks[b.dataset.k]; return render();
     case "pack": S.packs[b.dataset.k] = !S.packs[b.dataset.k]; return render();
     case "start": return newGame();
     case "reset":
@@ -346,12 +351,14 @@ function start(data) {
   else {
     S = defaults();
     const saved = load(KEY);
-    if (saved) { Object.assign(S, saved); S.example = false; }
+    if (saved) { Object.assign(S, saved); S.ipacks = Object.assign(defaults().ipacks, saved.ipacks); S.example = false; }
     else {
       // Première visite : reprend les joueurs du Quiz Undercover s'il y en a.
       const quiz = load("jeux.quiz-undercover.v1");
       if (quiz && quiz.players && quiz.players.length) { S.players = quiz.players.slice(0, 20); S.example = false; }
     }
+    // Partie en cours de l'ancien mode Images (emojis) : abandonnée.
+    if (S.g && S.g.mode === "images" && !/\.(webp|jpe?g|png)$/.test(S.g.civ)) S.g = null;
     // Ne jamais rouvrir l'application sur un mot affiché.
     if (!S.g) S.screen = "setup";
     else if (S.screen === "word") S.screen = "pass";

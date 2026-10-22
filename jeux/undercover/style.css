@@ -37,5 +37,7 @@
 .order li::marker { font-family: var(--f-mono); font-weight: 500; color: var(--muted); }
 .verdict { text-align: center; font-size: clamp(28px, 9vw, 48px); max-width: 100%; overflow-wrap: anywhere; }
 .verdict-wrap { overflow-x: clip; }
-.pic { margin: 0; font-size: clamp(110px, 38vw, 180px); line-height: 1.1; text-align: center; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
-.pic-sm { font-size: 1.4em; vertical-align: -.15em; font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; }
+.photo { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; background: var(--line); }
+.thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 4px; vertical-align: middle; margin-right: 6px; background: var(--line); }
+.ans strong { display: flex; align-items: center; justify-content: flex-end; gap: 6px; text-align: right; }
+.ans strong .thumb { margin: 0; flex: none; }
