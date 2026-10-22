@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jeux entre potes</title>
+<meta name="description" content="Jeux de soirée à jouer entre potes sur un seul téléphone.">
+<meta name="theme-color" content="#15203A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Entre potes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="assets/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="assets/css/base.css">
+</head>
+<body>
+<main class="sheet wide">
+  <header class="head">
+    <div class="brand">Jeux<br><em>entre potes</em></div>
+    <div class="stamp">Salle de jeux</div>
+  </header>
+  <p class="intro">Des jeux de bluff et de soirée. Un seul téléphone, qu'on se passe autour de la table.</p>
+  <section class="games" id="games" aria-label="Catalogue des jeux"></section>
+  <p class="foot">Astuce : ajoutez ce site à l'écran d'accueil pour l'ouvrir comme une app, même sans réseau.</p>
+</main>
+<script src="assets/js/catalogue.js"></script>
+<script>
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  document.getElementById("games").innerHTML = GAMES.map(g => {
+    const facts = g.facts.map(f => `<span>${esc(f)}</span>`).join("");
+    const top = `<div class="game-top"><h2>${esc(g.title)}</h2><span class="emblem" aria-hidden="true">${esc(g.emblem)}</span></div>`;
+    return g.path
+      ? `<a class="game" href="${esc(g.path)}">${top}<p>${esc(g.pitch)}</p><div class="facts">${facts}</div><span class="play">Jouer</span></a>`
+      : `<div class="game soon">${top}<p>${esc(g.pitch)}</p><div class="facts">${facts}</div></div>`;
+  }).join("");
+</script>
+<script src="assets/js/pwa.js"></script>
+</body>
+</html>
