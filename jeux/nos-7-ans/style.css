@@ -1,0 +1,87 @@
+/* « Nos 7 ans » : direction artistique propre (rose poudré, pêche, prune), via les mêmes tokens que base.css */
+:root {
+  --paper: #FFF3F0; --card: #FFFFFF; --ink: #4A2633; --muted: #9A6B7A; --line: #F3D3DA;
+  --stamp: #E8577E; --stamp-ink: #FFFFFF; --stamp-soft: #FDE3EA; --mark: #FFB896;
+  --f-display: "Fraunces", Georgia, serif; --f-body: "Nunito", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #24141C; --card: #331D28; --ink: #FBE9EE; --muted: #D6A9B8; --line: #553241;
+    --stamp: #FF8FAE; --stamp-ink: #2A1720; --stamp-soft: #4A2636; --mark: #FFB38F; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #24141C; --card: #331D28; --ink: #FBE9EE; --muted: #D6A9B8; --line: #553241;
+  --stamp: #FF8FAE; --stamp-ink: #2A1720; --stamp-soft: #4A2636; --mark: #FFB38F; color-scheme: dark;
+}
+body { background: radial-gradient(120% 70% at 50% 0%, var(--stamp-soft), var(--paper) 70%) fixed, var(--paper); }
+.sheet { position: relative; z-index: 1; }
+.box, details { border-radius: 22px; border-color: var(--line); box-shadow: 0 6px 24px color-mix(in srgb, var(--stamp) 12%, transparent); }
+.btn { border-radius: 999px; }
+.btn.big { border-radius: 999px; }
+.label { font-family: var(--f-body); font-weight: 800; letter-spacing: .08em; color: var(--stamp); }
+.back { font-family: var(--f-body); }
+
+/* Cœurs qui flottent en arrière-plan */
+.float { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.float i { position: absolute; bottom: -40px; width: var(--s); height: var(--s); opacity: .0; animation: rise var(--d) linear var(--w) infinite; color: var(--stamp); }
+.float i svg { width: 100%; height: 100%; fill: currentColor; }
+@keyframes rise { 0% { transform: translateY(0) rotate(-8deg); opacity: 0; } 10% { opacity: .22; } 90% { opacity: .18; } 100% { transform: translateY(-110vh) rotate(14deg); opacity: 0; } }
+
+/* Accueil */
+.hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding-top: 4px; }
+.hero svg { width: min(62vw, 240px); height: auto; filter: drop-shadow(0 10px 20px color-mix(in srgb, var(--stamp) 30%, transparent)); animation: beat 2.4s ease-in-out infinite; }
+@keyframes beat { 0%, 100% { transform: scale(1); } 12% { transform: scale(1.06); } 24% { transform: scale(1); } 36% { transform: scale(1.04); } }
+.title { margin: 0; font-family: var(--f-display); font-weight: 800; font-size: clamp(40px, 12vw, 58px); line-height: 1; letter-spacing: -.02em; }
+.title em { font-style: italic; font-weight: 700; color: var(--stamp); }
+.names { margin: 0; font-family: var(--f-display); font-style: italic; font-size: 22px; color: var(--muted); }
+.names b { color: var(--ink); font-style: normal; font-weight: 600; }
+.lead { font-family: var(--f-body); }
+
+/* Progression : 7 cœurs */
+.hearts { display: flex; justify-content: center; gap: 6px; }
+.hearts svg { width: 26px; height: 26px; fill: none; stroke: var(--line); stroke-width: 2; }
+.hearts svg.now { stroke: var(--stamp); }
+.hearts svg.yes { fill: var(--stamp); stroke: var(--stamp); }
+.hearts svg.no { fill: var(--mark); stroke: var(--mark); opacity: .55; }
+
+/* Carte question */
+.card { align-items: center; text-align: center; padding: 26px 20px; gap: 12px; background:
+  radial-gradient(circle at 0 0, var(--stamp-soft) 0 38px, transparent 39px), radial-gradient(circle at 100% 100%, var(--stamp-soft) 0 38px, transparent 39px), var(--card); }
+.qwho { font-family: var(--f-display); font-style: italic; font-size: 20px; color: var(--muted); margin: 0; }
+.qtext { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: clamp(26px, 7.4vw, 34px); line-height: 1.15; text-wrap: balance; }
+.turn { font-family: var(--f-display); font-weight: 800; font-size: clamp(44px, 14vw, 64px); line-height: 1; color: var(--stamp); overflow-wrap: anywhere; }
+
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.choices button { font: inherit; font-weight: 800; font-size: 20px; padding: 18px 10px; border-radius: 20px; border: 2px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.choices button.both { grid-column: 1 / -1; font-size: 17px; padding: 12px; flex-direction: row; justify-content: center; }
+.choices button svg { width: 26px; height: 26px; fill: var(--line); }
+.choices button[aria-pressed="true"] { border-color: var(--stamp); background: var(--stamp-soft); color: var(--stamp); transform: scale(1.02); }
+.choices button[aria-pressed="true"] svg { fill: var(--stamp); }
+
+/* Révélation */
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.duo div { background: var(--card); border: 2px solid var(--line); border-radius: 20px; padding: 14px 10px; text-align: center; display: flex; flex-direction: column; gap: 4px; }
+.duo small { color: var(--muted); font-size: 14px; }
+.duo strong { font-family: var(--f-display); font-size: 24px; }
+.match .duo div { border-color: var(--stamp); }
+.verdict { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.verdict svg { width: 74px; height: 74px; fill: var(--stamp); animation: pop .6s cubic-bezier(.2,.9,.3,1.4); }
+.verdict.no svg { fill: var(--mark); }
+.verdict p { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: 26px; }
+.verdict span { color: var(--muted); }
+@keyframes pop { from { transform: scale(.2) rotate(-20deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+
+/* Fin */
+.score { font-family: var(--f-display); font-weight: 800; font-size: clamp(64px, 22vw, 96px); line-height: 1; color: var(--stamp); text-align: center; margin: 0; }
+.score small { font-size: .38em; color: var(--muted); font-weight: 600; }
+.letter { font-family: var(--f-display); font-style: italic; font-size: 20px; line-height: 1.45; text-align: center; margin: 0; text-wrap: balance; }
+.sign { font-family: var(--f-display); font-weight: 700; color: var(--stamp); text-align: center; margin: 0; }
+.rain { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; }
+.rain i { position: absolute; top: -40px; width: var(--s); height: var(--s); color: var(--stamp); animation: fall var(--d) ease-in var(--w) forwards; }
+.rain i:nth-child(3n) { color: var(--mark); }
+.rain i svg { width: 100%; height: 100%; fill: currentColor; }
+@keyframes fall { to { transform: translateY(115vh) rotate(var(--r)); } }
+.names-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.names-form input { width: 100%; box-sizing: border-box; border-radius: 14px; }
+.names-form .btn { grid-column: 1 / -1; }
