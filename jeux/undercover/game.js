@@ -74,7 +74,7 @@ function voc(mode) {
 
 function head(stamp) {
   const back = S.screen === "setup" ? `<a class="back" href="../../">← Tous les jeux</a>` : "";
-  return `<header class="head"><div class="head-l">${back}<div class="brand">Under<br><em>cover</em></div></div><div class="stamp">${esc(stamp)}</div></header>`;
+  return `<header class="head"><div class="head-l">${back}<div class="brand">Under<br><em>cover</em></div></div><div class="head-r"><div class="stamp">${esc(stamp)}</div>${S.screen === "setup" ? fx.soundButton() : ""}</div></header>`;
 }
 
 function scoreList(delta) {
@@ -256,6 +256,7 @@ function render(focusId) {
   if (S.screen !== lastScreen) {
     window.scrollTo(0, 0); lastScreen = S.screen; fx.enter(app);
     fx.buzz({ word: 15, peekword: 15, out: 60, result: [40, 60, 90] }[S.screen]);
+    fx.sound({ word: "reveal", peekword: "reveal", out: "elim", result: "win" }[S.screen]);
   }
   if (focusId) { const el = document.getElementById(focusId); if (el) el.focus(); }
   save();
@@ -338,7 +339,7 @@ app.addEventListener("click", e => {
       S.screen = "out"; return render(g.roles[g.out] === "w" ? "guess" : null);
     case "wjudge":
       g.guessed = true; g.guess = "";
-      if (b.dataset.ok) { g.winner = "w"; scoreGame(); S.screen = "result"; } else checkWin();
+      if (b.dataset.ok) { g.winner = "w"; scoreGame(); S.screen = "result"; } else { fx.sound("fail"); checkWin(); }
       return render();
     case "next": g.turn += 1; g.order = speakOrder(); S.screen = "play"; return render();
     case "toresult": scoreGame(); S.screen = "result"; return render();
@@ -382,7 +383,7 @@ app.addEventListener("submit", e => {
     if (!v) return;
     g.guessed = true; g.guess = v;
     if (norm(v) === norm(g.civ)) { g.winner = "w"; scoreGame(); S.screen = "result"; return render(); }
-    checkWin(); render();
+    fx.sound("fail"); checkWin(); render();
   }
 });
 

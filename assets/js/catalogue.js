@@ -18,5 +18,14 @@ const GAMES = [
     players: "3 – 20",
     time: "10 min",
     save: "jeux.undercover.v1"
+  },
+  {
+    title: "Undercover Dessin",
+    art: "dessin",
+    path: "jeux/undercover-dessin/",
+    pitch: "Un trait chacun sur le même dessin. L'imposteur n'a pas le même mot.",
+    players: "3 – 10",
+    time: "10 min",
+    save: "jeux.undercover-dessin.v1"
   }
 ];

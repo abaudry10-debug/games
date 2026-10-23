@@ -131,3 +131,11 @@ a { color: inherit; }
 .settings .sum { margin-left: auto; font-weight: 400; font-size: 14px; color: var(--muted); text-align: right; }
 .settings .dbody { gap: 20px; }
 .seg.full button { flex: 1; justify-content: center; }
+.snd { font: inherit; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--ink); display: inline-grid; place-items: center; cursor: pointer; flex: none; padding: 0; }
+.snd svg { width: 20px; height: 20px; fill: currentColor; }
+.snd[aria-pressed="false"] { color: var(--muted); }
+.head-r { display: flex; align-items: center; gap: 10px; }
+.game-dessin .art { background: color-mix(in srgb, var(--mark) 35%, var(--card)); }
+.scribble { stroke-dasharray: 1; stroke-dashoffset: 1; animation: scribble 4s ease-in-out infinite; }
+.scribble.s2 { animation-delay: 1.2s; }
+@keyframes scribble { 0% { stroke-dashoffset: 1; } 45%, 85% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }

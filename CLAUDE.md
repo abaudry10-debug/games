@@ -9,6 +9,7 @@ En ligne sur GitHub Pages : https://abaudry10-debug.github.io/games/ (déployé 
 - Tout le texte visible est en français.
 - Chaque jeu vit dans `jeux/<nom>/` et s'ajoute dans `assets/js/catalogue.js`.
 - Réglage « Taux de ressemblance » (1 très faible à 5 très haut) commun aux deux Undercover : `assets/js/ressemblance.js`. Les données portent leur niveau (3, 4 ou 5) ; les niveaux 1 et 2 sont tirés automatiquement.
+- Sons et vibrations : `assets/js/fx.js` (sons synthétisés, bouton pour couper le son).
 - À chaque changement de fichiers servis : mettre à jour `ASSETS` si besoin et incrémenter `VERSION` dans `sw.js`.
 - Tester en local avec `python3 -m http.server` avant de pousser.
 - Sauf demande contraire, pousser directement sur `main` (pas de PR) pour que le site se mette à jour.
@@ -16,3 +17,4 @@ En ligne sur GitHub Pages : https://abaudry10-debug.github.io/games/ (déployé 
 ## Jeux
 - `jeux/quiz-undercover/` : chacun désigne un joueur en réponse à une question ; l'imposteur a reçu une question proche mais différente ; « Revoir ma question » dès qu'on a répondu. Questions dans `questions.js`.
 - `jeux/undercover/` : Undercover classique (civils, undercovers, Mr White), modes Mots et Images, avec « Revoir mon mot » dès la distribution. Paires de mots dans `mots.js`, paires de photos dans `images.js` (Wikimedia Commons, chargées par le téléphone et gardées hors ligne par `sw.js`, crédits dans `credits.html`).
+- `jeux/undercover-dessin/` : chacun ajoute un trait au même dessin ; l'imposteur a un mot proche ou aucun mot. Réutilise `../undercover/mots.js` et `../undercover/style.css`.

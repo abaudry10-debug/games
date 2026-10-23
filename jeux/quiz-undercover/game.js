@@ -32,7 +32,7 @@ const qno = q => (q.id[0] === "q" ? "n° " + q.id.slice(1) : "perso");
 
 function head(stamp) {
   const back = S.screen === "setup" ? `<a class="back" href="../../">← Tous les jeux</a>` : "";
-  return `<header class="head"><div class="head-l">${back}<div class="brand">Quiz<br><em>Undercover</em></div></div><div class="stamp">${esc(stamp)}</div></header>`;
+  return `<header class="head"><div class="head-l">${back}<div class="brand">Quiz<br><em>Undercover</em></div></div><div class="head-r"><div class="stamp">${esc(stamp)}</div>${S.screen === "setup" ? fx.soundButton() : ""}</div></header>`;
 }
 
 function scoreList(delta) {
@@ -214,7 +214,7 @@ function startTick() {
     const el = document.getElementById("timer");
     if (!el) return clearInterval(tick);
     el.textContent = fmtTimer();
-    if (S.timerEnd && Date.now() >= S.timerEnd) { el.classList.add("done"); clearInterval(tick); }
+    if (S.timerEnd && Date.now() >= S.timerEnd) { el.classList.add("done"); clearInterval(tick); fx.sound("alarm"); fx.buzz([80, 60, 80]); }
   }, 250);
 }
 
@@ -225,6 +225,7 @@ function render(focusId) {
   if (S.screen !== lastScreen) {
     window.scrollTo(0, 0); lastScreen = S.screen; fx.enter(app);
     fx.buzz({ question: 15, peekq: 15, reveal: 40, result: [40, 60, 90] }[S.screen]);
+    fx.sound(S.screen === "result" ? (S.round.imps.includes(S.round.accused) ? "win" : "fail") : { question: "reveal", peekq: "reveal", reveal: "reveal" }[S.screen]);
   }
   if (focusId) { const el = document.getElementById(focusId); if (el) el.focus(); }
 }
