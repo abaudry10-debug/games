@@ -62,33 +62,36 @@ const V = {
     const hasScores = S.players.some(p => S.scores[p]);
     return `${head("Dossier ouvert")}
     <section class="field">
-      <div class="label">Les suspects · ${n}/12</div>
-      ${S.example ? `<p class="note">Noms d'exemple : ils disparaissent dès que vous ajoutez le premier vrai prénom.</p>` : ""}
-      <div class="players">${S.players.map((p, i) => `<span class="chip"><span>${esc(p)}</span><button data-a="rm" data-i="${i}" aria-label="Retirer ${esc(p)}">×</button></span>`).join("") || `<p class="note">Aucun joueur pour l'instant.</p>`}</div>
+      <div class="label">Joueurs · ${n}</div>
+      <div class="players">${S.players.map((p, i) => `<span class="chip${S.example ? " ex" : ""}"><span>${esc(p)}</span><button data-a="rm" data-i="${i}" aria-label="Retirer ${esc(p)}">×</button></span>`).join("")}</div>
       <form class="row" data-form="add">
-        <input id="newp" type="text" maxlength="16" placeholder="Prénom ou surnom" autocomplete="off" aria-label="Prénom du joueur">
-        <button class="btn" type="submit" ${n >= 12 ? "disabled" : ""}>Ajouter</button>
+        <input id="newp" type="text" maxlength="16" placeholder="Ajouter un joueur" autocomplete="off" aria-label="Prénom du joueur">
+        <button class="btn" type="submit" aria-label="Ajouter" ${n >= 12 ? "disabled" : ""}>+</button>
       </form>
       ${S.msg ? `<p class="err">${esc(S.msg)}</p>` : ""}
     </section>
-    <section class="field">
-      <div class="label">Paquets de questions</div>
-      <div class="seg">${Object.entries(PACKS).map(([k, v]) => `<button data-a="pack" data-k="${k}" aria-pressed="${!!S.packs[k]}">${v}<span class="count">${QS.filter(q => q.p === k).length}</span></button>`).join("")}</div>
-    </section>
-    ${simPicker(S.sim, "questions")}
-    <section class="field">
-      <div class="label">Nombre d'imposteurs</div>
-      <div class="seg">${[1, 2].map(k => `<button data-a="imp" data-k="${k}" aria-pressed="${effImp() === k}" ${k === 2 && n < 6 ? "disabled" : ""}>${k}</button>`).join("")}</div>
-      ${n < 6 ? `<p class="note">Deux imposteurs possibles à partir de 6 joueurs.</p>` : ""}
-    </section>
-    <button class="btn big red" data-a="start" ${canStart ? "" : "disabled"}>Lancer la manche</button>
-    ${n < 3 ? `<p class="note center">Il faut au moins 3 joueurs.</p>` : !pool().length ? `<p class="note center">Activez au moins un paquet de questions.</p>` : ""}
-    ${hasScores ? `<section class="box"><div class="label">Classement</div>${scoreList()}
-      <button class="btn ghost quiet" data-a="reset">${S.arm === "reset" ? "Confirmer la remise à zéro" : "Remettre les scores à zéro"}</button></section>` : ""}
-    <details id="customBox" ${S.openCustom ? "open" : ""}>
-      <summary>Vos questions perso (${S.custom.length})</summary>
+    <details id="setBox" class="settings" ${S.openSet ? "open" : ""}>
+      <summary>Réglages<span class="sum">${simName(S.sim)} · ${effImp()} imposteur${effImp() > 1 ? "s" : ""}</span></summary>
       <div class="dbody">
-        <p class="note">Ajoutez vos références de groupe. Elles entrent dans le tirage avec les paquets actifs.</p>
+        ${simPicker(S.sim, "questions")}
+        <section class="field">
+          <div class="label">Imposteurs</div>
+          <div class="seg">${[1, 2].map(k => `<button data-a="imp" data-k="${k}" aria-pressed="${effImp() === k}" ${k === 2 && n < 6 ? "disabled" : ""}>${k}</button>`).join("")}</div>
+          ${n < 6 ? `<p class="note">2 imposteurs dès 6 joueurs.</p>` : ""}
+        </section>
+        <section class="field">
+          <div class="label">Paquets</div>
+          <div class="seg">${Object.entries(PACKS).map(([k, v]) => `<button data-a="pack" data-k="${k}" aria-pressed="${!!S.packs[k]}">${v}<span class="count">${QS.filter(q => q.p === k).length}</span></button>`).join("")}</div>
+        </section>
+      </div>
+    </details>
+    <button class="btn big red" data-a="start" ${canStart ? "" : "disabled"}>Jouer</button>
+    ${n < 3 ? `<p class="note center">Au moins 3 joueurs.</p>` : !pool().length ? `<p class="note center">Activez au moins un paquet.</p>` : ""}
+    ${hasScores ? `<details><summary>Classement</summary><div class="dbody">${scoreList()}
+      <button class="btn ghost quiet" data-a="reset">${S.arm === "reset" ? "Confirmer la remise à zéro" : "Remettre à zéro"}</button></div></details>` : ""}
+    <details id="customBox" ${S.openCustom ? "open" : ""}>
+      <summary>Questions perso<span class="count">${S.custom.length || ""}</span></summary>
+      <div class="dbody">
         <form class="stack" data-form="custom">
           <input id="cc" type="text" maxlength="120" placeholder="Question de l'équipe : Qui a perdu son passeport à Lisbonne ?" aria-label="Question de l'équipe">
           <input id="ci" type="text" maxlength="120" placeholder="Question de l'imposteur : Qui a le mieux géré le voyage ?" aria-label="Question de l'imposteur">
@@ -219,7 +222,10 @@ function render(focusId) {
   clearInterval(tick);
   app.innerHTML = V[S.screen]();
   if (S.screen === "reveal" && S.timerEnd && Date.now() < S.timerEnd) startTick();
-  if (S.screen !== lastScreen) { window.scrollTo(0, 0); lastScreen = S.screen; }
+  if (S.screen !== lastScreen) {
+    window.scrollTo(0, 0); lastScreen = S.screen; fx.enter(app);
+    fx.buzz({ question: 15, peekq: 15, reveal: 40, result: [40, 60, 90] }[S.screen]);
+  }
   if (focusId) { const el = document.getElementById(focusId); if (el) el.focus(); }
 }
 
@@ -291,7 +297,10 @@ app.addEventListener("click", e => {
   }
 });
 
-app.addEventListener("toggle", e => { if (e.target.id === "customBox") S.openCustom = e.target.open; }, true);
+app.addEventListener("toggle", e => {
+  if (e.target.id === "customBox") S.openCustom = e.target.open;
+  if (e.target.id === "setBox") S.openSet = e.target.open;
+}, true);
 
 app.addEventListener("submit", e => {
   e.preventDefault();

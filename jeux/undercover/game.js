@@ -102,45 +102,43 @@ const V = {
     const hasScores = S.players.some(p => S.scores[p]);
     return `${head("Mission")}
     <section class="field">
-      <div class="label">Les agents · ${n}/20</div>
-      ${S.example ? `<p class="note">Noms d'exemple : ils disparaissent dès que vous ajoutez le premier vrai prénom.</p>` : ""}
-      <div class="players">${S.players.map((p, i) => `<span class="chip"><span>${esc(p)}</span><button data-a="rm" data-i="${i}" aria-label="Retirer ${esc(p)}">×</button></span>`).join("") || `<p class="note">Aucun joueur pour l'instant.</p>`}</div>
+      <div class="label">Joueurs · ${n}</div>
+      <div class="players">${S.players.map((p, i) => `<span class="chip${S.example ? " ex" : ""}"><span>${esc(p)}</span><button data-a="rm" data-i="${i}" aria-label="Retirer ${esc(p)}">×</button></span>`).join("")}</div>
       <form class="row" data-form="add">
-        <input id="newp" type="text" maxlength="16" placeholder="Prénom ou surnom" autocomplete="off" aria-label="Prénom du joueur">
-        <button class="btn" type="submit" ${n >= 20 ? "disabled" : ""}>Ajouter</button>
+        <input id="newp" type="text" maxlength="16" placeholder="Ajouter un joueur" autocomplete="off" aria-label="Prénom du joueur">
+        <button class="btn" type="submit" aria-label="Ajouter" ${n >= 20 ? "disabled" : ""}>+</button>
       </form>
       ${S.msg ? `<p class="err">${esc(S.msg)}</p>` : ""}
     </section>
-    <section class="field">
-      <div class="label">Mode de jeu</div>
-      <div class="seg">${[["mots", "Mots"], ["images", "Images"]].map(([k, l]) => `<button data-a="mode" data-k="${k}" aria-pressed="${S.mode === k}">${l}</button>`).join("")}</div>
-      <p class="note">${img ? "Chacun reçoit une photo, l'undercover une photo proche." : "Chacun reçoit un mot, l'undercover un mot proche."}</p>
-    </section>
-    ${simPicker(S.sim, img ? "images" : "mots")}
-    <section class="field">
-      <div class="label">Undercovers</div>
-      <div class="seg">${[0, 1, 2, 3].map(k => `<button data-a="nu" data-k="${k}" aria-pressed="${e.u === k}" ${k > e.m || (k === 0 && e.w === 0) ? "disabled" : ""}>${k}</button>`).join("")}</div>
-    </section>
-    <section class="field">
-      <div class="label">Mr White</div>
-      <div class="seg">${[0, 1].map(k => `<button data-a="nw" data-k="${k}" aria-pressed="${e.w === k}" ${k === 1 && e.m < 1 ? "disabled" : ""}>${k ? "Avec" : "Sans"}</button>`).join("")}</div>
-      <p class="note">${n >= 3 ? `${n - e.u - e.w} civil${n - e.u - e.w > 1 ? "s" : ""}, ${e.u} undercover${e.u > 1 ? "s" : ""}${e.w ? " et 1 Mr White" : ""}. ` : ""}Les civils doivent rester plus nombreux que les imposteurs.</p>
-    </section>
-    ${img ? `<section class="field">
-      <div class="label">Paquets d'images</div>
-      <div class="seg">${Object.entries(IMG_PACKS).map(([k, v]) => `<button data-a="ipack" data-k="${k}" aria-pressed="${!!S.ipacks[k]}">${v}<span class="count">${IS.filter(w => w.p === k).length}</span></button>`).join("")}</div>
-    </section>` : `<section class="field">
-      <div class="label">Paquets de mots</div>
-      <div class="seg">${Object.entries(PACKS).map(([k, v]) => `<button data-a="pack" data-k="${k}" aria-pressed="${!!S.packs[k]}">${v}<span class="count">${WS.filter(w => w.p === k).length}</span></button>`).join("")}</div>
-    </section>`}
-    <button class="btn big red" data-a="start" ${canStart ? "" : "disabled"}>Distribuer les ${img ? "images" : "mots"}</button>
-    ${n < 3 ? `<p class="note center">Il faut au moins 3 joueurs.</p>` : !pool().length ? `<p class="note center">Activez au moins un paquet ${img ? "d'images" : "de mots"}.</p>` : ""}
-    ${hasScores ? `<section class="box"><div class="label">Classement</div>${scoreList()}
-      <button class="btn ghost quiet" data-a="reset">${S.arm === "reset" ? "Confirmer la remise à zéro" : "Remettre les scores à zéro"}</button></section>` : ""}
-    ${img ? "" : `<details id="customBox" ${S.openCustom ? "open" : ""}>
-      <summary>Vos paires de mots perso (${S.custom.length})</summary>
+    <div class="seg full">${[["mots", "Mots"], ["images", "Images"]].map(([k, l]) => `<button data-a="mode" data-k="${k}" aria-pressed="${S.mode === k}">${l}</button>`).join("")}</div>
+    <details id="setBox" class="settings" ${S.openSet ? "open" : ""}>
+      <summary>Réglages<span class="sum">${simName(S.sim)} · ${e.u} undercover${e.u > 1 ? "s" : ""}${e.w ? " · Mr White" : ""}</span></summary>
       <div class="dbody">
-        <p class="note">Deux mots proches : l'un ira aux civils, l'autre aux undercovers. Elles entrent dans le tirage avec les paquets actifs.</p>
+        ${simPicker(S.sim, img ? "images" : "mots")}
+        <section class="field">
+          <div class="label">Undercovers</div>
+          <div class="seg">${[0, 1, 2, 3].map(k => `<button data-a="nu" data-k="${k}" aria-pressed="${e.u === k}" ${k > e.m || (k === 0 && e.w === 0) ? "disabled" : ""}>${k}</button>`).join("")}</div>
+        </section>
+        <section class="field">
+          <div class="label">Mr White</div>
+          <div class="seg">${[0, 1].map(k => `<button data-a="nw" data-k="${k}" aria-pressed="${e.w === k}" ${k === 1 && e.m < 1 ? "disabled" : ""}>${k ? "Avec" : "Sans"}</button>`).join("")}</div>
+        </section>
+        ${img ? `<section class="field">
+          <div class="label">Paquets</div>
+          <div class="seg">${Object.entries(IMG_PACKS).map(([k, v]) => `<button data-a="ipack" data-k="${k}" aria-pressed="${!!S.ipacks[k]}">${v}<span class="count">${IS.filter(w => w.p === k).length}</span></button>`).join("")}</div>
+        </section>` : `<section class="field">
+          <div class="label">Paquets</div>
+          <div class="seg">${Object.entries(PACKS).map(([k, v]) => `<button data-a="pack" data-k="${k}" aria-pressed="${!!S.packs[k]}">${v}<span class="count">${WS.filter(w => w.p === k).length}</span></button>`).join("")}</div>
+        </section>`}
+      </div>
+    </details>
+    <button class="btn big red" data-a="start" ${canStart ? "" : "disabled"}>Jouer</button>
+    ${n < 3 ? `<p class="note center">Au moins 3 joueurs.</p>` : !pool().length ? `<p class="note center">Activez au moins un paquet.</p>` : ""}
+    ${hasScores ? `<details><summary>Classement</summary><div class="dbody">${scoreList()}
+      <button class="btn ghost quiet" data-a="reset">${S.arm === "reset" ? "Confirmer la remise à zéro" : "Remettre à zéro"}</button></div></details>` : ""}
+    ${img ? "" : `<details id="customBox" ${S.openCustom ? "open" : ""}>
+      <summary>Mots perso<span class="count">${S.custom.length || ""}</span></summary>
+      <div class="dbody">
         <form class="stack" data-form="custom">
           <input id="ca" type="text" maxlength="40" placeholder="Premier mot : Lisbonne" aria-label="Premier mot">
           <input id="cb" type="text" maxlength="40" placeholder="Second mot : Barcelone" aria-label="Second mot">
@@ -255,7 +253,10 @@ const V = {
 
 function render(focusId) {
   app.innerHTML = V[S.screen]();
-  if (S.screen !== lastScreen) { window.scrollTo(0, 0); lastScreen = S.screen; }
+  if (S.screen !== lastScreen) {
+    window.scrollTo(0, 0); lastScreen = S.screen; fx.enter(app);
+    fx.buzz({ word: 15, peekword: 15, out: 60, result: [40, 60, 90] }[S.screen]);
+  }
   if (focusId) { const el = document.getElementById(focusId); if (el) el.focus(); }
   save();
 }
@@ -356,7 +357,10 @@ app.addEventListener("error", e => {
   if (img.tagName === "IMG" && img.src.includes("/thumb/") && !img.dataset.fallback) { img.dataset.fallback = "1"; img.src = original(img.src); }
 }, true);
 
-app.addEventListener("toggle", e => { if (e.target.id === "customBox") S.openCustom = e.target.open; }, true);
+app.addEventListener("toggle", e => {
+  if (e.target.id === "customBox") S.openCustom = e.target.open;
+  if (e.target.id === "setBox") S.openSet = e.target.open;
+}, true);
 
 app.addEventListener("submit", e => {
   e.preventDefault();

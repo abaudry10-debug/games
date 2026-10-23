@@ -24,20 +24,41 @@
     <div class="brand">Longue vie<br><em>à Netanyahu</em></div>
     <div class="stamp">Salle de jeux</div>
   </header>
-  <p class="intro">Des jeux de bluff et de soirée. Un seul téléphone, qu'on se passe autour de la table.</p>
-  <section class="games" id="games" aria-label="Catalogue des jeux"></section>
-  <p class="foot">Astuce : ajoutez ce site à l'écran d'accueil pour l'ouvrir comme une app, même sans réseau.</p>
+  <section class="games" id="games" aria-label="Jeux"></section>
 </main>
 <script src="assets/js/catalogue.js"></script>
+<script src="assets/js/fx.js"></script>
 <script>
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  document.getElementById("games").innerHTML = GAMES.map(g => {
-    const facts = g.facts.map(f => `<span>${esc(f)}</span>`).join("");
-    const top = `<div class="game-top"><h2>${esc(g.title)}</h2><span class="emblem" aria-hidden="true">${esc(g.emblem)}</span></div>`;
-    return g.path
-      ? `<a class="game" href="${esc(g.path)}">${top}<p>${esc(g.pitch)}</p><div class="facts">${facts}</div><span class="play">Jouer</span></a>`
-      : `<div class="game soon">${top}<p>${esc(g.pitch)}</p><div class="facts">${facts}</div></div>`;
+  // Illustrations animées des cartes (couleurs via les tokens du thème).
+  const ART = {
+    quiz: `<svg viewBox="0 0 320 180" aria-hidden="true">
+      <g class="bob" style="--d:0s"><path d="M38 38h104a16 16 0 0 1 16 16v38a16 16 0 0 1-16 16H82l-22 18v-18H38a16 16 0 0 1-16-16V54a16 16 0 0 1 16-16z" fill="var(--card)"/><text x="90" y="88" text-anchor="middle" font-family="var(--f-display)" font-weight="800" font-size="40" fill="var(--ink)">?</text></g>
+      <g class="bob" style="--d:-1.2s"><path d="M178 70h104a16 16 0 0 1 16 16v38a16 16 0 0 1-16 16h-22v18l-22-18h-60a16 16 0 0 1-16-16V86a16 16 0 0 1 16-16z" fill="var(--stamp)"/><text x="230" y="120" text-anchor="middle" font-family="var(--f-display)" font-weight="800" font-size="40" fill="var(--stamp-ink)">?!</text></g>
+      <g class="bob" style="--d:-2.1s"><circle cx="160" cy="34" r="10" fill="var(--mark)"/><circle cx="276" cy="42" r="6" fill="var(--card)"/><circle cx="58" cy="150" r="7" fill="var(--stamp)"/></g>
+    </svg>`,
+    undercover: `<svg viewBox="0 0 320 180" aria-hidden="true">
+      <g class="sway" style="--r:-14deg;--d:0s"><rect x="78" y="34" width="76" height="108" rx="10" fill="var(--paper)"/><path d="M94 66h44M94 80h30" stroke="var(--muted)" stroke-width="6" stroke-linecap="round"/></g>
+      <g class="sway" style="--r:0deg;--d:-.8s"><rect x="122" y="26" width="76" height="108" rx="10" fill="var(--paper)"/><path d="M138 58h44M138 72h30" stroke="var(--muted)" stroke-width="6" stroke-linecap="round"/></g>
+      <g class="sway" style="--r:14deg;--d:-1.6s"><rect x="166" y="34" width="76" height="108" rx="10" fill="var(--stamp)"/><text x="204" y="104" text-anchor="middle" font-family="var(--f-display)" font-weight="800" font-size="46" fill="var(--stamp-ink)">≠</text></g>
+      <g class="bob" style="--d:-.6s"><path d="M236 128c10-8 26-8 36 0 8 7 22 7 30 0 0 18-12 30-26 30-6 0-10-3-12-6-2 3-6 6-12 6-14 0-26-12-26-30 4 3 7 3 10 0z" fill="var(--mark)"/><ellipse cx="258" cy="140" rx="7" ry="5" fill="var(--ink)"/><ellipse cx="286" cy="140" rx="7" ry="5" fill="var(--ink)"/></g>
+    </svg>`
+  };
+  const PEOPLE = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5z"/><circle cx="17" cy="9" r="2.8"/><path d="M15.5 13.6c4 0 6.5 2.3 6.5 5.9h-4.5c0-2.3-.7-4.3-2-5.9z"/></svg>`;
+  const CLOCK = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12 7v5l3.5 2" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+  const ongoing = key => { try { const s = JSON.parse(localStorage.getItem(key) || "null"); return !!(s && s.g && s.screen && s.screen !== "result" && s.screen !== "setup"); } catch (e) { return false; } };
+  document.getElementById("games").innerHTML = GAMES.map((g, i) => {
+    const live = g.save && ongoing(g.save);
+    return `<a class="game game-${g.art}" href="${esc(g.path)}" style="--i:${i}">
+      <div class="art">${ART[g.art] || ""}${live ? `<span class="live">Partie en cours</span>` : ""}</div>
+      <div class="game-body">
+        <h2>${esc(g.title)}</h2>
+        <p>${esc(g.pitch)}</p>
+        <div class="meta"><span>${PEOPLE}${esc(g.players)}</span><span>${CLOCK}${esc(g.time)}</span><span class="play">${live ? "Reprendre" : "Jouer"}</span></div>
+      </div>
+    </a>`;
   }).join("");
+  document.getElementById("games").addEventListener("click", e => { if (e.target.closest(".game")) fx.buzz(10); });
 </script>
 <script src="assets/js/pwa.js"></script>
 </body>

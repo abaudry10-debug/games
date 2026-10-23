@@ -1,19 +1,22 @@
 // Catalogue des jeux affiché sur la page d'accueil.
-// Pour ajouter un jeu : créez son dossier dans /jeux/, puis ajoutez une entrée ici.
-// Sans "path", la carte s'affiche en « bientôt disponible ».
+// Pour ajouter un jeu : créez son dossier dans /jeux/, ajoutez une entrée ici et son illustration dans ART (index.html).
+// save : clé localStorage du jeu ; si une partie y est en cours, la carte propose « Reprendre ».
 const GAMES = [
   {
     title: "Quiz Undercover",
-    emblem: "???",
+    art: "quiz",
     path: "jeux/quiz-undercover/",
-    pitch: "Chacun désigne un pote en réponse à une question. L'imposteur a reçu une question différente et doit bluffer pour ne pas se faire griller.",
-    facts: ["3 à 12 joueurs", "1 téléphone", "Bluff", "≈ 5 min / manche"]
+    pitch: "Une question, un nom. L'imposteur n'a pas la même question.",
+    players: "3 – 12",
+    time: "5 min"
   },
   {
     title: "Undercover",
-    emblem: "≠",
+    art: "undercover",
     path: "jeux/undercover/",
-    pitch: "Tout le monde a le même mot… sauf les undercovers, qui ont un mot proche, et Mr White, qui n'en a aucun. Un indice chacun, puis on vote pour éliminer.",
-    facts: ["3 à 20 joueurs", "1 téléphone", "Bluff", "≈ 10 min / partie"]
+    pitch: "Un mot ou une photo chacun. Sauf l'undercover… et Mr White.",
+    players: "3 – 20",
+    time: "10 min",
+    save: "jeux.undercover.v1"
   }
 ];

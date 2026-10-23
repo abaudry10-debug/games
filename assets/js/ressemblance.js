@@ -16,11 +16,10 @@ const SIM_LEVELS = [
 // mode : "mots", "images" ou "questions". Les boutons envoient data-a="sim" data-k="1…5".
 function simPicker(level, mode) {
   const cur = SIM_LEVELS.find(s => s.n === level) || SIM_LEVELS[3];
-  const what = { mots: "les deux mots", images: "les deux photos", questions: "la question de l'équipe et celle de l'imposteur" }[mode];
   return `<section class="field">
       <div class="label">Taux de ressemblance</div>
-      <p class="note">À quel point ${what} se ressemblent.</p>
       <div class="seg sim">${SIM_LEVELS.map(s => `<button data-a="sim" data-k="${s.n}" aria-pressed="${s.n === cur.n}"><span class="sim-bars" aria-hidden="true">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= s.n ? "on" : ""}"></i>`).join("")}</span>${s.label}</button>`).join("")}</div>
       <div class="sim-desc"><strong>${cur.label} :</strong> ${cur.desc}<br><span>Exemple : ${cur.ex[mode]}.</span></div>
     </section>`;
 }
+const simName = level => (SIM_LEVELS.find(s => s.n === level) || SIM_LEVELS[3]).label;
