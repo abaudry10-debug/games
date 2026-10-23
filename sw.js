@@ -1,6 +1,6 @@
 // Service worker : réseau d'abord, cache en secours (mode hors ligne).
 // Après l'ajout d'un jeu, ajoutez ses fichiers à ASSETS et changez VERSION.
-const VERSION = "v15";
+const VERSION = "v16";
 const CACHE = "jeux-entre-potes-" + VERSION;
 // Photos de l'Undercover (Wikimedia Commons) : cache à part, gardé d'une version à l'autre (seules les nouvelles photos sont téléchargées).
 const PHOTOS = "jeux-entre-potes-photos";
@@ -9,7 +9,7 @@ try { importScripts(PHOTO_DIR + "images.js"); } catch (e) {}
 const PHOTO_URLS = typeof IMG === "undefined" ? [] : IMG.flatMap(m => [m[1], m[3]]).map(src => new URL(src, self.registration.scope + PHOTO_DIR).href);
 const ASSETS = [
   "./", "index.html", "manifest.webmanifest",
-  "assets/css/base.css", "assets/js/catalogue.js", "assets/js/pwa.js", "assets/js/ressemblance.js", "assets/js/fx.js",
+  "assets/css/base.css", "assets/js/catalogue.js", "assets/js/pwa.js", "assets/js/ressemblance.js", "assets/js/fx.js", "assets/js/paquets.js",
   "assets/icons/icon-192.png", "assets/icons/icon-512.png", "assets/icons/apple-touch-icon.png",
   "jeux/quiz-undercover/", "jeux/quiz-undercover/index.html", "jeux/quiz-undercover/style.css",
   "jeux/quiz-undercover/questions.js", "jeux/quiz-undercover/game.js",

@@ -66,7 +66,7 @@ const V = {
       <div class="players">${S.players.map((p, i) => `<span class="chip${S.example ? " ex" : ""}"><span>${esc(p)}</span><button data-a="rm" data-i="${i}" aria-label="Retirer ${esc(p)}">×</button></span>`).join("")}</div>
       <form class="row" data-form="add">
         <input id="newp" type="text" maxlength="16" placeholder="Ajouter un joueur" autocomplete="off" aria-label="Prénom du joueur">
-        <button class="btn" type="submit" aria-label="Ajouter" ${n >= 12 ? "disabled" : ""}>+</button>
+        <button class="btn" type="submit" aria-label="Ajouter le joueur" ${n >= 12 ? "disabled" : ""}>+</button>
       </form>
       ${S.msg ? `<p class="err">${esc(S.msg)}</p>` : ""}
     </section>

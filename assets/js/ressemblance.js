@@ -8,7 +8,7 @@ const SIM_LEVELS = [
   { n: 3, label: "Moyen", desc: "Liés, mais faciles à distinguer en écoutant bien.",
     ex: { mots: "« Banane » et « Mangue »", images: "Big Ben et la tour de Pise", questions: "« Qui cuisine le mieux ? » et « Qui mange le plus ? »" } },
   { n: 4, label: "Haut", desc: "Très proches : il faut des indices fins pour faire la différence.",
-    ex: { mots: "« Café » et « Thé »", images: "Elon Musk et Mark Zuckerberg", questions: "« Qui cuisine le mieux ? » et « Qui arriverait à brûler des pâtes ? »" } },
+    ex: { mots: "« Café » et « Thé », ou « Macron » et « Macaron »", images: "Elon Musk et Mark Zuckerberg", questions: "« Qui cuisine le mieux ? » et « Qui arriverait à brûler des pâtes ? »" } },
   { n: 5, label: "Très haut", desc: "Presque identiques : même les civils se mettent à douter.",
     ex: { mots: "« Crocodile » et « Alligator »", images: "deux présidents français (Chirac et Mitterrand) ou deux montagnes célèbres (Everest et Cervin)", questions: "« Qui cuisine le mieux ? » et « Qui ferait le meilleur chef dans un restaurant ? »" } }
 ];

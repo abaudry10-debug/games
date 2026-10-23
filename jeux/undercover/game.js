@@ -1,4 +1,3 @@
-const WS = W.map((w, i) => ({ id: "w" + (i + 1), p: w[0], cat: w[1], a: w[2], b: w[3], n: w[4] }));
 const IS = IMG.map((m, i) => ({ id: "i" + (i + 1), p: m[0], cat: m[0], a: m[1], la: m[2], b: m[3], lb: m[4], n: m[5] }));
 const KEY = "jeux.undercover.v1";
 const ROLE = { c: "Civil", u: "Undercover", w: "Mr White" };
@@ -8,18 +7,20 @@ let S, lastScreen = null, lock = null;
 
 function defaults() {
   return { screen: "setup", players: ["Léa", "Tom", "Sam", "Inès", "Hugo"], example: true,
-    mode: "mots", packs: { classique: true, soiree: true, culture: true }, ipacks: { perso: true, lieux: true, situations: true }, sim: 4, nU: 1, nW: 1, custom: [],
+    mode: "mots", packs: { classique: true, soiree: true, culture: true }, ipacks: { perso: true, lieux: true, situations: true }, sim: 4, nU: 1, nW: 1, recent: [],
     scores: {}, used: [], gameNo: 0, g: null, msg: "", arm: "" };
 }
 function load(key) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, mode: S.mode, packs: S.packs, ipacks: S.ipacks, sim: S.sim, nU: S.nU, nW: S.nW, custom: S.custom,
+  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, mode: S.mode, packs: S.packs, ipacks: S.ipacks, sim: S.sim, nU: S.nU, nW: S.nW, recent: S.recent,
     scores: S.scores, used: S.used, gameNo: S.gameNo, g: S.g, screen: S.screen })); } catch (e) {}
 }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const rand = n => Math.floor(Math.random() * n);
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-const pool = () => S.mode === "images" ? IS.filter(w => S.ipacks[w.p]) : WS.filter(w => S.packs[w.p]).concat(S.custom.map(c => ({ id: "c" + c.id, p: "perso", cat: "perso", a: c.a, b: c.b, n: 0 })));
+const isActive = id => S.packs[id] !== false;
+const pool = () => (S.mode === "images" ? IS.filter(w => S.ipacks[w.p]) : []);
+const canPlay = () => (S.mode === "images" ? pool().length > 0 : Paquets.count(isActive) >= 2);
 
 // Tire une paire selon le taux de ressemblance choisi.
 // 3 à 5 : paires de la banque de ce niveau (paires perso : à tous ces niveaux), sinon le niveau le plus proche.
@@ -98,7 +99,7 @@ function passBox(p, note) {
 
 const V = {
   setup() {
-    const n = S.players.length, e = eff(), canStart = n >= 3 && pool().length > 0, img = S.mode === "images";
+    const n = S.players.length, e = eff(), canStart = n >= 3 && canPlay(), img = S.mode === "images";
     const hasScores = S.players.some(p => S.scores[p]);
     return `${head("Mission")}
     <section class="field">
@@ -106,7 +107,7 @@ const V = {
       <div class="players">${S.players.map((p, i) => `<span class="chip${S.example ? " ex" : ""}"><span>${esc(p)}</span><button data-a="rm" data-i="${i}" aria-label="Retirer ${esc(p)}">×</button></span>`).join("")}</div>
       <form class="row" data-form="add">
         <input id="newp" type="text" maxlength="16" placeholder="Ajouter un joueur" autocomplete="off" aria-label="Prénom du joueur">
-        <button class="btn" type="submit" aria-label="Ajouter" ${n >= 20 ? "disabled" : ""}>+</button>
+        <button class="btn" type="submit" aria-label="Ajouter le joueur" ${n >= 20 ? "disabled" : ""}>+</button>
       </form>
       ${S.msg ? `<p class="err">${esc(S.msg)}</p>` : ""}
     </section>
@@ -125,28 +126,21 @@ const V = {
         </section>
         ${img ? `<section class="field">
           <div class="label">Paquets</div>
-          <div class="seg">${Object.entries(IMG_PACKS).map(([k, v]) => `<button data-a="ipack" data-k="${k}" aria-pressed="${!!S.ipacks[k]}">${v}<span class="count">${IS.filter(w => w.p === k).length}</span></button>`).join("")}</div>
+          <div class="seg">${Object.entries(IMG_PACKS).map(([k, v]) => `<button data-a="ipack" data-k="${k}" aria-pressed="${!!S.ipacks[k]}">${v}</button>`).join("")}</div>
         </section>` : `<section class="field">
           <div class="label">Paquets</div>
-          <div class="seg">${Object.entries(PACKS).map(([k, v]) => `<button data-a="pack" data-k="${k}" aria-pressed="${!!S.packs[k]}">${v}<span class="count">${WS.filter(w => w.p === k).length}</span></button>`).join("")}</div>
+          ${Paquets.selector(isActive)}
         </section>`}
         ${simPicker(S.sim, img ? "images" : "mots")}
       </div>
     </details>
     <button class="btn big red" data-a="start" ${canStart ? "" : "disabled"}>Jouer</button>
-    ${n < 3 ? `<p class="note center">Au moins 3 joueurs.</p>` : !pool().length ? `<p class="note center">Activez au moins un paquet.</p>` : ""}
+    ${n < 3 ? `<p class="note center">Au moins 3 joueurs.</p>` : !canPlay() ? `<p class="note center">Activez au moins un paquet.</p>` : ""}
     ${hasScores ? `<details><summary>Classement</summary><div class="dbody">${scoreList()}
       <button class="btn ghost quiet" data-a="reset">${S.arm === "reset" ? "Confirmer la remise à zéro" : "Remettre à zéro"}</button></div></details>` : ""}
-    ${img ? "" : `<details id="customBox" ${S.openCustom ? "open" : ""}>
-      <summary>Mots perso<span class="count">${S.custom.length || ""}</span></summary>
-      <div class="dbody">
-        <form class="stack" data-form="custom">
-          <input id="ca" type="text" maxlength="40" placeholder="Premier mot : Lisbonne" aria-label="Premier mot">
-          <input id="cb" type="text" maxlength="40" placeholder="Second mot : Barcelone" aria-label="Second mot">
-          <button class="btn" type="submit">Ajouter la paire</button>
-        </form>
-        ${S.custom.length ? `<ul class="custom-list">${S.custom.map(c => `<li><div>${esc(c.a)}<small>${esc(c.b)}</small></div><button data-a="rmc" data-id="${c.id}" aria-label="Supprimer cette paire">×</button></li>`).join("")}</ul>` : ""}
-      </div>
+    ${img ? "" : `<details id="packBox" ${S.openPacks ? "open" : ""}>
+      <summary>Paquets</summary>
+      <div class="dbody">${Paquets.manager()}</div>
     </details>`}
     <details>
       <summary>Règles du jeu</summary>
@@ -158,7 +152,7 @@ const V = {
           <li>On recommence jusqu'à la victoire d'un camp. Les civils gagnent quand tous les imposteurs sont éliminés. Les imposteurs gagnent s'il ne reste plus qu'un civil.</li>
         </ol>
         <p><strong>Mode Images :</strong> même principe avec des images. Chacun décrit son image sans la nommer, et Mr White doit deviner l'image des civils. Les photos viennent de Wikimedia Commons (<a href="credits.html">auteurs et licences</a>). Il faut Internet la première fois, ensuite elles restent sur le téléphone.</p>
-        <p><strong>Taux de ressemblance :</strong> de « très faible » (deux mots ou photos sans aucun rapport) à « très haut » (presque identiques, comme deux présidents français). Les paires perso sont utilisées aux niveaux moyen, haut et très haut.</p>
+        <p><strong>Taux de ressemblance :</strong> de « très faible » (deux mots ou photos sans aucun rapport) à « très haut » (presque identiques, comme deux présidents français). La proximité entre deux mots tient compte du sens, du thème et même de l'orthographe (« Macron » et « Macaron » sont proches).</p>
         <p>Un joueur a oublié son mot ou son image ? Bouton « Revoir » pendant la partie.</p>
         <p><strong>Points :</strong> victoire des civils, 2 points par civil. Victoire des imposteurs, 10 points par undercover et 6 points pour chaque Mr White encore en jeu. Un Mr White qui trouve le mot marque 6 points.</p>
       </div>
@@ -275,8 +269,15 @@ function speakOrder() {
 }
 
 function newGame() {
-  const all = pool(), e = eff(); if (S.players.length < 3 || !all.length) return;
-  const w = pickPair(all, S.sim), flip = rand(2);
+  const e = eff(); if (S.players.length < 3 || !canPlay()) return;
+  let w;
+  if (S.mode === "images") w = pickPair(pool(), S.sim);
+  else {
+    const r = Paquets.pick(isActive, S.sim, S.recent || []); if (!r) return;
+    S.recent = [r.na, r.nb].concat(S.recent || []).slice(0, 80);
+    w = { a: r.a, b: r.b };
+  }
+  const flip = rand(2);
   const players = S.players.slice(), first = S.gameNo % players.length, roles = {};
   shuffle(players).forEach((p, i) => { roles[p] = i < e.u ? "u" : i < e.u + e.w ? "w" : "c"; });
   S.gameNo += 1;
@@ -309,6 +310,8 @@ function scoreGame() {
 }
 
 app.addEventListener("click", e => {
+  const pk = e.target.closest("[data-pk]");
+  if (pk) { if (Paquets.handle(pk)) render(); return; }
   const b = e.target.closest("[data-a]"); if (!b || b.disabled) return;
   const a = b.dataset.a, g = S.g;
   if (a !== "reset" && a !== "quit") S.arm = "";
@@ -319,12 +322,11 @@ app.addEventListener("click", e => {
     case "mode": S.mode = b.dataset.k; return render();
     case "sim": S.sim = +b.dataset.k; return render();
     case "ipack": S.ipacks[b.dataset.k] = !S.ipacks[b.dataset.k]; return render();
-    case "pack": S.packs[b.dataset.k] = !S.packs[b.dataset.k]; return render();
+    case "pack": S.packs[b.dataset.k] = !isActive(b.dataset.k); return render();
     case "start": return newGame();
     case "reset":
       if (S.arm === "reset") { S.scores = {}; S.gameNo = 0; S.arm = ""; } else S.arm = "reset";
       return render();
-    case "rmc": S.openCustom = true; S.custom = S.custom.filter(c => String(c.id) !== b.dataset.id); S.used = S.used.filter(id => id !== "c" + b.dataset.id); return render();
     case "quit":
       if (S.arm === "quit") { S.arm = ""; S.g = null; S.screen = "setup"; } else S.arm = "quit";
       return render();
@@ -360,13 +362,14 @@ app.addEventListener("error", e => {
 }, true);
 
 app.addEventListener("toggle", e => {
-  if (e.target.id === "customBox") S.openCustom = e.target.open;
+  if (e.target.id === "packBox") S.openPacks = e.target.open;
   if (e.target.id === "setBox") S.openSet = e.target.open;
 }, true);
 
 app.addEventListener("submit", e => {
   e.preventDefault();
-  const f = e.target.dataset.form;
+  const f = e.target.dataset.form, focus = Paquets.submit(e.target);
+  if (focus) return render(focus);
   if (f === "add") {
     const v = document.getElementById("newp").value.trim().replace(/\s+/g, " ");
     if (!v) return;
@@ -374,11 +377,6 @@ app.addEventListener("submit", e => {
     if (S.players.some(p => p.toLowerCase() === v.toLowerCase())) { S.msg = `${v} est déjà dans la liste.`; return render("newp"); }
     if (S.players.length >= 20) { S.msg = "20 joueurs maximum."; return render("newp"); }
     S.players.push(v); S.msg = ""; render("newp");
-  } else if (f === "custom") {
-    const a = document.getElementById("ca").value.trim(), b = document.getElementById("cb").value.trim();
-    if (!a || !b) { document.getElementById(a ? "cb" : "ca").focus(); return; }
-    S.custom.push({ id: Date.now(), a, b });
-    S.openCustom = true; render("ca");
   } else if (f === "guess") {
     const v = document.getElementById("guess").value.trim(), g = S.g;
     if (!v) return;
@@ -393,6 +391,7 @@ function start(data) {
   else {
     S = defaults();
     const saved = load(KEY);
+    if (saved && saved.custom && saved.custom.length) { Paquets.importPairs("Perso", saved.custom.map(c => [c.a, c.b])); saved.custom = []; }
     if (saved) { Object.assign(S, saved); if (!S.sim) S.sim = 4; S.ipacks = Object.assign(defaults().ipacks, saved.ipacks); S.example = false; }
     else {
       // Première visite : reprend les joueurs du Quiz Undercover s'il y en a.

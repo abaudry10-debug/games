@@ -1,11 +1,8 @@
 // Undercover Dessin : chacun ajoute un trait au même dessin ; l'imposteur n'a pas le même mot (ou n'en a pas).
 // Les mots viennent de l'Undercover (../undercover/mots.js).
-const WS = W.map((w, i) => ({ id: "w" + (i + 1), p: w[0], cat: w[1], a: w[2], b: w[3], n: w[4] }));
 const KEY = "jeux.undercover-dessin.v1";
 const COLORS = ["#E4572E", "#2E86AB", "#3BB273", "#F4B400", "#8E44AD", "#E91E63", "#00ACC1", "#795548", "#FF7F11", "#37474F"];
-const THEMES = { nourriture: "Nourriture", animaux: "Animaux", maison: "Maison", vetements: "Vêtements", techno: "Technologie", lieux: "Lieux",
-  loisirs: "Loisirs", metiers: "Métiers", nature: "Nature", transports: "Transports", "musique-ecole": "Musique et école", imaginaire: "Imaginaire", soiree: "Soirée" };
-const theme = cat => THEMES[cat] || "Culture pop";
+const theme = t => Paquets.themeLabel(t);
 const app = document.getElementById("app");
 let S, lastScreen = null, lock = null;
 
@@ -15,13 +12,14 @@ function defaults() {
 }
 function load() { try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, packs: S.packs, sim: S.sim, nU: S.nU, nW: S.nW, tours: S.tours,
+  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, packs: S.packs, sim: S.sim, nU: S.nU, nW: S.nW, tours: S.tours, recent: S.recent,
     scores: S.scores, used: S.used, roundNo: S.roundNo, g: S.g, screen: S.screen })); } catch (e) {}
 }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const rand = n => Math.floor(Math.random() * n);
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-const pool = () => WS.filter(w => S.packs[w.p]);
+const isActive = id => S.packs[id] !== false;
+const canPlay = () => Paquets.count(isActive) >= 2;
 const ROLE = { c: "Civil", u: "Undercover", w: "Mr White" };
 // Les civils doivent rester majoritaires : au plus (n - 1) / 2 imposteurs (undercovers et Mr White).
 function eff() {
@@ -33,27 +31,6 @@ function eff() {
 }
 const color = p => COLORS[S.players.indexOf(p) % COLORS.length];
 const dot = p => `<i class="dot" style="background:${color(p)}"></i>`;
-
-// Même logique de ressemblance que l'Undercover : 3 à 5 = paires de ce niveau, 2 = même thème, 1 = thèmes différents.
-function pickPair(all, lvl) {
-  if (lvl <= 2) {
-    const items = all.flatMap(w => [{ v: w.a, cat: w.cat, id: w.id }, { v: w.b, cat: w.cat, id: w.id }]);
-    for (let t = 0; t < 40; t++) {
-      const x = items[rand(items.length)];
-      const ys = items.filter(y => y.v !== x.v && y.id !== x.id && (lvl === 2 ? y.cat === x.cat : y.cat !== x.cat));
-      if (ys.length) { const y = ys[rand(ys.length)]; return { id: null, a: x.v, b: y.v, cat: x.cat }; }
-    }
-    return pickPair(all, 3);
-  }
-  let cands = [];
-  for (const d of [0, 1, -1, 2, -2]) { const n = lvl + d; if (n >= 3 && n <= 5) { cands = all.filter(w => w.n === n); if (cands.length) break; } }
-  if (!cands.length) cands = all;
-  let fresh = cands.filter(w => !S.used.includes(w.id));
-  if (!fresh.length) { S.used = S.used.filter(id => !cands.some(w => w.id === id)); fresh = cands; }
-  const w = fresh[rand(fresh.length)];
-  S.used.push(w.id);
-  return w;
-}
 
 function head(stamp) {
   const back = S.screen === "setup" ? `<a class="back" href="../../">← Tous les jeux</a>` : "";
@@ -76,14 +53,14 @@ const passBox = p => `<section class="box pass"><div class="label">Passe le tél
 
 const V = {
   setup() {
-    const n = S.players.length, e = eff(), canStart = n >= 3 && pool().length > 0, hasScores = S.players.some(p => S.scores[p]);
+    const n = S.players.length, e = eff(), canStart = n >= 3 && canPlay(), hasScores = S.players.some(p => S.scores[p]);
     return `${head("Atelier")}
     <section class="field">
       <div class="label">Joueurs · ${n}</div>
       <div class="players">${S.players.map((p, i) => `<span class="chip${S.example ? " ex" : ""}">${dot(p)}<span>${esc(p)}</span><button data-a="rm" data-i="${i}" aria-label="Retirer ${esc(p)}">×</button></span>`).join("")}</div>
       <form class="row" data-form="add">
         <input id="newp" type="text" maxlength="16" placeholder="Ajouter un joueur" autocomplete="off" aria-label="Prénom du joueur">
-        <button class="btn" type="submit" aria-label="Ajouter" ${n >= 10 ? "disabled" : ""}>+</button>
+        <button class="btn" type="submit" aria-label="Ajouter le joueur" ${n >= 10 ? "disabled" : ""}>+</button>
       </form>
       ${S.msg ? `<p class="err">${esc(S.msg)}</p>` : ""}
     </section>
@@ -106,15 +83,19 @@ const V = {
         </section>
         <section class="field">
           <div class="label">Paquets</div>
-          <div class="seg">${Object.entries(PACKS).map(([k, v]) => `<button data-a="pack" data-k="${k}" aria-pressed="${!!S.packs[k]}">${v}<span class="count">${WS.filter(w => w.p === k).length}</span></button>`).join("")}</div>
+          ${Paquets.selector(isActive)}
         </section>
         ${e.u ? simPicker(S.sim, "mots") : ""}
       </div>
     </details>
     <button class="btn big red" data-a="start" ${canStart ? "" : "disabled"}>Jouer</button>
-    ${n < 3 ? `<p class="note center">Au moins 3 joueurs.</p>` : !pool().length ? `<p class="note center">Activez au moins un paquet.</p>` : ""}
+    ${n < 3 ? `<p class="note center">Au moins 3 joueurs.</p>` : !canPlay() ? `<p class="note center">Activez au moins un paquet.</p>` : ""}
     ${hasScores ? `<details><summary>Classement</summary><div class="dbody">${scoreList()}
       <button class="btn ghost quiet" data-a="reset">${S.arm === "reset" ? "Confirmer la remise à zéro" : "Remettre à zéro"}</button></div></details>` : ""}
+    <details id="packBox" ${S.openPacks ? "open" : ""}>
+      <summary>Paquets</summary>
+      <div class="dbody">${Paquets.manager()}</div>
+    </details>
     <details>
       <summary>Règles du jeu</summary>
       <div class="dbody">
@@ -264,10 +245,12 @@ async function wake() {
 }
 
 function newRound() {
-  const all = pool(); if (S.players.length < 3 || !all.length) return;
+  if (S.players.length < 3 || !canPlay()) return;
   const players = S.players.slice(), first = S.roundNo % players.length;
-  const e = eff(), w = pickPair(all, e.u ? S.sim : 4), flip = rand(2);
-  const civ = flip ? w.b : w.a, und = e.u ? (flip ? w.a : w.b) : null, cat = w.cat;
+  const e = eff(), w = Paquets.pick(isActive, e.u ? S.sim : 4, S.recent || []), flip = rand(2);
+  if (!w) return;
+  S.recent = [w.na, w.nb].concat(S.recent || []).slice(0, 80);
+  const civ = flip ? w.b : w.a, und = e.u ? (flip ? w.a : w.b) : null, cat = flip ? w.themeB : w.theme;
   S.roundNo += 1;
   const roles = {};
   shuffle(players).forEach((p, i) => { roles[p] = i < e.u ? "u" : i < e.u + e.w ? "w" : "c"; });
@@ -301,6 +284,8 @@ function download() {
 }
 
 app.addEventListener("click", e => {
+  const pk = e.target.closest("[data-pk]");
+  if (pk) { if (Paquets.handle(pk)) render(); return; }
   const b = e.target.closest("[data-a]"); if (!b || b.disabled) return;
   const a = b.dataset.a, g = S.g;
   if (a !== "reset" && a !== "quit") S.arm = "";
@@ -310,7 +295,7 @@ app.addEventListener("click", e => {
     case "nw": S.nW = +b.dataset.k; if (S.nU + S.nW > eff().m) S.nU = Math.max(0, eff().m - S.nW); if (!S.nW && !S.nU) S.nU = 1; return render();
     case "sim": S.sim = +b.dataset.k; return render();
     case "tours": S.tours = +b.dataset.k; return render();
-    case "pack": S.packs[b.dataset.k] = !S.packs[b.dataset.k]; return render();
+    case "pack": S.packs[b.dataset.k] = !isActive(b.dataset.k); return render();
     case "start": return newRound();
     case "reset": if (S.arm === "reset") { S.scores = {}; S.roundNo = 0; S.arm = ""; } else S.arm = "reset"; return render();
     case "quit": if (S.arm === "quit") { S.arm = ""; S.g = null; S.screen = "setup"; } else S.arm = "quit"; return render();
@@ -335,10 +320,15 @@ app.addEventListener("click", e => {
   }
 });
 
-app.addEventListener("toggle", e => { if (e.target.id === "setBox") S.openSet = e.target.open; }, true);
+app.addEventListener("toggle", e => {
+  if (e.target.id === "setBox") S.openSet = e.target.open;
+  if (e.target.id === "packBox") S.openPacks = e.target.open;
+}, true);
 
 app.addEventListener("submit", e => {
   e.preventDefault();
+  const focus = Paquets.submit(e.target);
+  if (focus) return render(focus);
   if (e.target.dataset.form !== "add") return;
   const v = document.getElementById("newp").value.trim().replace(/\s+/g, " ");
   if (!v) return;
