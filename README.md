@@ -22,7 +22,6 @@ jeux/undercover/           Undercover classique (civils, undercovers, Mr White)
   mots.js                  Banque de paires de mots (à enrichir librement)
   images.js                Banque de paires de photos du mode Images (Wikimedia Commons)
   credits.html             Auteurs et licences des photos
-jeux/nos-7-ans/            Petit jeu romantique à deux (Alex et Betti)
 sw.js                      Service worker (cache hors ligne)
 manifest.webmanifest       Nom et icône de l'app installée
 ```

@@ -16,4 +16,3 @@ En ligne sur GitHub Pages : https://abaudry10-debug.github.io/games/ (déployé 
 ## Jeux
 - `jeux/quiz-undercover/` : chacun désigne un joueur en réponse à une question ; l'imposteur a reçu une question proche mais différente ; « Revoir ma question » dès qu'on a répondu. Questions dans `questions.js`.
 - `jeux/undercover/` : Undercover classique (civils, undercovers, Mr White), modes Mots et Images, avec « Revoir mon mot » dès la distribution. Paires de mots dans `mots.js`, paires de photos dans `images.js` (Wikimedia Commons, chargées par le téléphone et gardées hors ligne par `sw.js`, crédits dans `credits.html`).
-- `jeux/nos-7-ans/` : petit jeu romantique à deux pour les 7 ans d'Alex et Betti (« Qui de nous deux… ? », 7 questions). Direction artistique propre (tokens redéfinis dans son `style.css`). Questions dans `questions.js`.
