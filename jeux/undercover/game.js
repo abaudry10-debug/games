@@ -7,7 +7,7 @@ let S, lastScreen = null, lock = null;
 
 function defaults() {
   return { screen: "setup", players: ["Léa", "Tom", "Sam", "Inès", "Hugo"], example: true,
-    mode: "mots", packs: { classique: true, soiree: true, culture: true }, ipacks: { perso: true, lieux: true, situations: true }, sim: 4, nU: 1, nW: 1, dealInfo: true, recent: [],
+    mode: "mots", packs: { classique: true, soiree: true, culture: true }, ipacks: { perso: true, lieux: true, situations: true, controverse: true }, sim: 4, nU: 1, nW: 1, dealInfo: true, recent: [],
     scores: {}, used: [], gameNo: 0, g: null, msg: "", arm: "" };
 }
 function load(key) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
