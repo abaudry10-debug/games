@@ -1,34 +1,22 @@
-const QS = Q.map((q, i) => ({ id: "q" + (i + 1), p: q[0], c: q[1], v: { 5: q[2], 4: q[3], 3: q[4] } }));
 const KEY = "jeux.quiz-undercover.v1";
 const app = document.getElementById("app");
 let S, tick = null, lastScreen = null, lock = null;
 
 function defaults() {
   return { screen: "setup", players: ["Léa", "Tom", "Sam", "Inès"], example: true,
-    packs: { classique: true, soiree: true, epice: false }, nImp: 1, sim: 4, custom: [],
+    packs: { classique: true, soiree: true, epice: false }, nImp: 1, sim: 4, recent: [],
     scores: {}, used: [], roundNo: 0, round: null, timerEnd: null, msg: "", arm: "" };
 }
 function load() { try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, packs: S.packs, nImp: S.nImp, sim: S.sim, custom: S.custom, scores: S.scores, used: S.used, roundNo: S.roundNo })); } catch (e) {}
+  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, packs: S.packs, nImp: S.nImp, sim: S.sim, recent: S.recent, scores: S.scores, roundNo: S.roundNo })); } catch (e) {}
 }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const rand = n => Math.floor(Math.random() * n);
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 const effImp = () => (S.players.length >= 6 ? S.nImp : 1);
-const pool = () => QS.filter(q => S.packs[q.p]).concat(S.custom.map(c => ({ id: "c" + c.id, p: "perso", c: c.c, v: { 5: c.i, 4: c.i, 3: c.i } })));
-
-// Question de l'imposteur selon le taux de ressemblance.
-// 3 à 5 : variante écrite pour ce niveau ; 2 : une autre question du même paquet ; 1 : une question d'un autre paquet.
-function impostorQuestion(q, all) {
-  const lvl = S.sim;
-  if (lvl >= 3) return q.v[lvl];
-  const others = all.concat(QS).filter(o => o.c !== q.c);
-  let pick = others.filter(o => (lvl === 2 ? o.p === q.p : o.p !== q.p));
-  if (!pick.length) pick = others;
-  return pick.length ? pick[rand(pick.length)].c : q.v[3];
-}
-const qno = q => (q.id[0] === "q" ? "n° " + q.id.slice(1) : "perso");
+const isActive = id => S.packs[id] !== false;
+const canPlay = () => QPaquets.count(isActive) >= 2;
 
 function head(stamp) {
   const back = S.screen === "setup" ? `<a class="back" href="../../">← Tous les jeux</a>` : "";
@@ -58,7 +46,7 @@ function veiled(label, inner, note, final) {
 
 const V = {
   setup() {
-    const n = S.players.length, canStart = n >= 3 && pool().length > 0;
+    const n = S.players.length, canStart = n >= 3 && canPlay();
     const hasScores = S.players.some(p => S.scores[p]);
     return `${head("Dossier ouvert")}
     <section class="field">
@@ -80,25 +68,18 @@ const V = {
         </section>
         <section class="field">
           <div class="label">Paquets</div>
-          <div class="seg">${Object.entries(PACKS).map(([k, v]) => `<button data-a="pack" data-k="${k}" aria-pressed="${!!S.packs[k]}">${v}<span class="count">${QS.filter(q => q.p === k).length}</span></button>`).join("")}</div>
+          ${QPaquets.selector(isActive)}
         </section>
         ${simPicker(S.sim, "questions")}
       </div>
     </details>
     <button class="btn big red" data-a="start" ${canStart ? "" : "disabled"}>Jouer</button>
-    ${n < 3 ? `<p class="note center">Au moins 3 joueurs.</p>` : !pool().length ? `<p class="note center">Activez au moins un paquet.</p>` : ""}
+    ${n < 3 ? `<p class="note center">Au moins 3 joueurs.</p>` : !canPlay() ? `<p class="note center">Activez au moins un paquet.</p>` : ""}
     ${hasScores ? `<details><summary>Classement</summary><div class="dbody">${scoreList()}
       <button class="btn ghost quiet" data-a="reset">${S.arm === "reset" ? "Confirmer la remise à zéro" : "Remettre à zéro"}</button></div></details>` : ""}
-    <details id="customBox" ${S.openCustom ? "open" : ""}>
-      <summary>Questions perso<span class="count">${S.custom.length || ""}</span></summary>
-      <div class="dbody">
-        <form class="stack" data-form="custom">
-          <input id="cc" type="text" maxlength="120" placeholder="Question de l'équipe : Qui a perdu son passeport à Lisbonne ?" aria-label="Question de l'équipe">
-          <input id="ci" type="text" maxlength="120" placeholder="Question de l'imposteur : Qui a le mieux géré le voyage ?" aria-label="Question de l'imposteur">
-          <button class="btn" type="submit">Ajouter la question</button>
-        </form>
-        ${S.custom.length ? `<ul class="custom-list">${S.custom.map(c => `<li><div>${esc(c.c)}<small>Imposteur : ${esc(c.i)}</small></div><button data-a="rmc" data-id="${c.id}" aria-label="Supprimer cette question">×</button></li>`).join("")}</ul>` : ""}
-      </div>
+    <details id="packBox" ${S.openPacks ? "open" : ""}>
+      <summary>Paquets</summary>
+      <div class="dbody">${QPaquets.manager()}</div>
     </details>
     <details>
       <summary>Règles du jeu</summary>
@@ -110,7 +91,7 @@ const V = {
           <li>Débat, puis le groupe accuse un seul joueur.</li>
         </ol>
         <p>Quelqu'un a oublié sa question ? Bouton « Revoir ma question » dès qu'il a répondu, jusqu'au vote.</p>
-        <p><strong>Taux de ressemblance :</strong> de « très faible » (la question de l'imposteur n'a rien à voir) à « très haut » (presque la même question, on désigne souvent la même personne).</p>
+        <p><strong>Taux de ressemblance :</strong> de « très faible » (la question de l'imposteur n'a rien à voir) à « très haut » (presque la même question, on désigne souvent la même personne). Une question et son contraire comptent comme éloignées.</p>
         <p><strong>Points :</strong> imposteur démasqué, chaque innocent marque 1 point. Imposteur qui s'en sort, il marque 2 points.</p>
       </div>
     </details>`;
@@ -128,7 +109,7 @@ const V = {
   question() {
     const r = S.round, p = r.order[r.idx], text = r.imps.includes(p) ? r.q.i : r.q.c;
     return `${head("Confidentiel")}
-    <section class="box"><div class="label">${esc(p)} · question ${qno(r.q)}</div><p class="question">${esc(text)}</p></section>
+    <section class="box"><div class="label">${esc(p)} · ta question</div><p class="question">${esc(text)}</p></section>
     <section class="field"><div class="label">Ta réponse : un seul nom</div>
       <div class="pick">${S.players.map(n => `<button data-a="sel" data-n="${esc(n)}" aria-pressed="${r.sel === n}">${esc(n)}</button>`).join("")}</div>
     </section>
@@ -235,12 +216,10 @@ async function wake() {
 }
 
 function newRound() {
-  const all = pool(); if (S.players.length < 3 || !all.length) return;
-  let fresh = all.filter(q => !S.used.includes(q.id));
-  if (!fresh.length) { S.used = S.used.filter(id => !all.some(q => q.id === id)); fresh = all; }
-  const base = fresh[rand(fresh.length)];
-  S.used.push(base.id);
-  const q = { id: base.id, p: base.p, c: base.c, i: impostorQuestion(base, all) };
+  if (S.players.length < 3 || !canPlay()) return;
+  const t = QPaquets.pick(isActive, S.sim, S.recent || []); if (!t) return;
+  S.recent = [t.na, t.nb].concat(S.recent || []).slice(0, 60);
+  const q = { c: t.a, i: t.b };
   const players = S.players.slice(), first = S.roundNo % players.length;
   S.roundNo += 1;
   S.round = { q, imps: shuffle(players).slice(0, effImp()), order: players.slice(first).concat(players.slice(0, first)),
@@ -261,19 +240,20 @@ function scoreRound() {
 }
 
 app.addEventListener("click", e => {
+  const pk = e.target.closest("[data-pk]");
+  if (pk) { if (QPaquets.handle(pk)) render(); return; }
   const b = e.target.closest("[data-a]"); if (!b || b.disabled) return;
   const a = b.dataset.a, r = S.round;
   if (a !== "reset" && a !== "quit") S.arm = "";
   switch (a) {
     case "rm": S.players.splice(+b.dataset.i, 1); S.example = false; S.msg = ""; save(); return render();
-    case "pack": S.packs[b.dataset.k] = !S.packs[b.dataset.k]; save(); return render();
+    case "pack": S.packs[b.dataset.k] = !isActive(b.dataset.k); save(); return render();
     case "imp": S.nImp = +b.dataset.k; save(); return render();
     case "sim": S.sim = +b.dataset.k; save(); return render();
     case "start": return newRound();
     case "reset":
       if (S.arm === "reset") { S.scores = {}; S.roundNo = 0; S.arm = ""; save(); } else S.arm = "reset";
       return render();
-    case "rmc": S.openCustom = true; S.custom = S.custom.filter(c => String(c.id) !== b.dataset.id); S.used = S.used.filter(id => id !== "c" + b.dataset.id); save(); return render();
     case "see": S.screen = "question"; return render();
     case "peek": r.peekBack = S.screen; S.screen = "peekpick"; return render();
     case "peekp": r.peek = b.dataset.n; S.screen = "peekpass"; return render();
@@ -299,13 +279,14 @@ app.addEventListener("click", e => {
 });
 
 app.addEventListener("toggle", e => {
-  if (e.target.id === "customBox") S.openCustom = e.target.open;
+  if (e.target.id === "packBox") S.openPacks = e.target.open;
   if (e.target.id === "setBox") S.openSet = e.target.open;
 }, true);
 
 app.addEventListener("submit", e => {
   e.preventDefault();
-  const f = e.target.dataset.form;
+  const f = e.target.dataset.form, focus = QPaquets.submit(e.target);
+  if (focus) return render(focus);
   if (f === "add") {
     const v = document.getElementById("newp").value.trim().replace(/\s+/g, " ");
     if (!v) return;
@@ -313,11 +294,6 @@ app.addEventListener("submit", e => {
     if (S.players.some(p => p.toLowerCase() === v.toLowerCase())) { S.msg = `${v} est déjà dans la liste.`; return render("newp"); }
     if (S.players.length >= 12) { S.msg = "12 joueurs maximum."; return render("newp"); }
     S.players.push(v); S.msg = ""; save(); render("newp");
-  } else if (f === "custom") {
-    const c = document.getElementById("cc").value.trim(), i = document.getElementById("ci").value.trim();
-    if (!c || !i) { document.getElementById(c ? "ci" : "cc").focus(); return; }
-    S.custom.push({ id: Date.now(), c, i }); save();
-    S.openCustom = true; render("cc");
   }
 });
 
@@ -326,7 +302,8 @@ function start(data) {
   else {
     S = defaults();
     const saved = load();
-    if (saved) { Object.assign(S, saved); if (!S.sim) S.sim = 4; S.example = false; }
+    if (saved && saved.custom && saved.custom.length) { QPaquets.importPairs("Perso", saved.custom.map(c => [c.c, c.i])); saved.custom = []; }
+    if (saved) { Object.assign(S, saved); if (!S.sim) S.sim = 4; S.example = false; delete S.custom; delete S.used; }
   }
   render();
 }
