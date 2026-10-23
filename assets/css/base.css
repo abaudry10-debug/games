@@ -139,3 +139,8 @@ a { color: inherit; }
 .scribble { stroke-dasharray: 1; stroke-dashoffset: 1; animation: scribble 4s ease-in-out infinite; }
 .scribble.s2 { animation-delay: 1.2s; }
 @keyframes scribble { 0% { stroke-dashoffset: 1; } 45%, 85% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+/* En-tête : le titre ne se fait jamais recouvrir ; le tampon passe à la ligne s'il manque de place. */
+.head { flex-wrap: wrap; row-gap: 8px; }
+.head-l { flex: 1 1 auto; }
+.head-r { margin-left: auto; }
+@media (max-width: 420px) { .stamp { font-size: 10px; letter-spacing: .1em; padding: 3px 7px; } }

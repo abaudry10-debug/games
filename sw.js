@@ -1,6 +1,6 @@
 // Service worker : réseau d'abord, cache en secours (mode hors ligne).
 // Après l'ajout d'un jeu, ajoutez ses fichiers à ASSETS et changez VERSION.
-const VERSION = "v13";
+const VERSION = "v14";
 const CACHE = "jeux-entre-potes-" + VERSION;
 // Photos de l'Undercover (Wikimedia Commons) : cache à part, gardé d'une version à l'autre (seules les nouvelles photos sont téléchargées).
 const PHOTOS = "jeux-entre-potes-photos";

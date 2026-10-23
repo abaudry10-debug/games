@@ -74,7 +74,7 @@ function voc(mode) {
 
 function head(stamp) {
   const back = S.screen === "setup" ? `<a class="back" href="../../">← Tous les jeux</a>` : "";
-  return `<header class="head"><div class="head-l">${back}<div class="brand">Under<br><em>cover</em></div></div><div class="head-r"><div class="stamp">${esc(stamp)}</div>${S.screen === "setup" ? fx.soundButton() : ""}</div></header>`;
+  return `<header class="head"><div class="head-l">${back}<div class="brand">Under<br><em>cover</em></div></div><div class="head-r">${S.screen === "setup" ? fx.soundButton() : `<div class="stamp">${esc(stamp)}</div>`}</div></header>`;
 }
 
 function scoreList(delta) {

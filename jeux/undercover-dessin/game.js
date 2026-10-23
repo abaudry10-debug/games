@@ -48,7 +48,7 @@ function pickPair(all, lvl) {
 
 function head(stamp) {
   const back = S.screen === "setup" ? `<a class="back" href="../../">← Tous les jeux</a>` : "";
-  return `<header class="head"><div class="head-l">${back}<div class="brand">Undercover<br><em>Dessin</em></div></div><div class="head-r"><div class="stamp">${esc(stamp)}</div>${S.screen === "setup" ? fx.soundButton() : ""}</div></header>`;
+  return `<header class="head"><div class="head-l">${back}<div class="brand">Undercover<br><em>Dessin</em></div></div><div class="head-r">${S.screen === "setup" ? fx.soundButton() : `<div class="stamp">${esc(stamp)}</div>`}</div></header>`;
 }
 function scoreList(delta) {
   const rows = S.players.map(p => ({ p, s: S.scores[p] || 0, d: delta ? delta[p] || 0 : null })).sort((a, b) => b.s - a.s);
