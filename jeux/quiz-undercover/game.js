@@ -4,7 +4,7 @@ let S, tick = null, lastScreen = null, lock = null;
 
 function defaults() {
   return { screen: "setup", players: ["Léa", "Tom", "Sam", "Inès"], example: true,
-    packs: { classique: true, soiree: true, epice: false }, nImp: 1, sim: 4, recent: [],
+    packs: { classique: true, soiree: true, epice: false, trash: false }, nImp: 1, sim: 4, recent: [],
     scores: {}, used: [], roundNo: 0, round: null, timerEnd: null, msg: "", arm: "" };
 }
 function load() { try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
@@ -303,7 +303,7 @@ function start(data) {
     S = defaults();
     const saved = load();
     if (saved && saved.custom && saved.custom.length) { QPaquets.importPairs("Perso", saved.custom.map(c => [c.c, c.i])); saved.custom = []; }
-    if (saved) { Object.assign(S, saved); if (!S.sim) S.sim = 4; S.example = false; delete S.custom; delete S.used; }
+    if (saved) { Object.assign(S, saved); S.packs = Object.assign(defaults().packs, saved.packs || {}); if (!S.sim) S.sim = 4; S.example = false; delete S.custom; delete S.used; }
   }
   render();
 }
