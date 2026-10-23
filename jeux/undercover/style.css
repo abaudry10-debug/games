@@ -66,3 +66,4 @@
 .pcard.imp .pc-tag { background: var(--stamp); color: var(--stamp-ink); transform: rotate(-4deg); }
 .pcard.imp .pc-name { color: var(--stamp); }
 .ans.imp span, .ans.imp strong { color: var(--stamp); }
+.lb-img.lb-only { max-height: calc(100vh - 120px); margin-bottom: 40px; }

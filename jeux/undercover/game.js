@@ -7,12 +7,12 @@ let S, lastScreen = null, lock = null;
 
 function defaults() {
   return { screen: "setup", players: ["Léa", "Tom", "Sam", "Inès", "Hugo"], example: true,
-    mode: "mots", packs: { classique: true, soiree: true, culture: true }, ipacks: { perso: true, lieux: true, situations: true }, sim: 4, nU: 1, nW: 1, recent: [],
+    mode: "mots", packs: { classique: true, soiree: true, culture: true }, ipacks: { perso: true, lieux: true, situations: true }, sim: 4, nU: 1, nW: 1, dealInfo: true, recent: [],
     scores: {}, used: [], gameNo: 0, g: null, msg: "", arm: "" };
 }
 function load(key) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, mode: S.mode, packs: S.packs, ipacks: S.ipacks, sim: S.sim, nU: S.nU, nW: S.nW, recent: S.recent,
+  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, mode: S.mode, packs: S.packs, ipacks: S.ipacks, sim: S.sim, nU: S.nU, nW: S.nW, dealInfo: S.dealInfo, recent: S.recent,
     scores: S.scores, used: S.used, gameNo: S.gameNo, g: S.g, screen: S.screen })); } catch (e) {}
 }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -91,10 +91,11 @@ function secret(p) {
   if (g.roles[p] === "w") return `<section class="box"><div class="label">${esc(p)} · ton rôle</div><p class="word">Mr White</p>
     <p class="note">Tu n'as pas ${v.mot === "mot" ? "de mot" : "d'image"}. Écoute les autres, bluffe, et si tu es éliminé tu pourras tenter de deviner ${v.civ}.</p></section>`;
   if (g.mode === "images") {
-    const src = u ? g.und : g.civ, name = u ? g.undL : g.civL;
+    // Réglage « Infos sur la photo » : avec, la photo ouvre sa fiche ; sans, on peut seulement l'agrandir.
+    const src = u ? g.und : g.civ, name = u ? g.undL : g.civL, info = S.dealInfo !== false;
     return `<section class="box photo-card"><div class="label">${esc(p)} · ton image</div>
-      <button class="photo-btn" data-a="info" data-src="${esc(src)}" data-name="${esc(name)}" aria-label="Agrandir la photo et en savoir plus"><img class="photo big" src="${esc(src)}" alt="${esc(name)}"><span class="info-dot" aria-hidden="true">i</span></button>
-      <p class="note">Tu ne sais pas si tu es civil ou undercover. Touche la photo pour l'agrandir et savoir ce que c'est.</p></section>`;
+      <button class="photo-btn" data-a="${info ? "info" : "zoom"}" data-src="${esc(src)}" data-name="${esc(info ? name : "")}" aria-label="${info ? "Agrandir la photo et en savoir plus" : "Agrandir la photo"}"><img class="photo big" src="${esc(src)}" alt="${info ? esc(name) : "Ta photo"}">${info ? `<span class="info-dot" aria-hidden="true">i</span>` : ""}</button>
+      <p class="note">Tu ne sais pas si tu es civil ou undercover. ${info ? "Touche la photo pour l'agrandir et savoir ce que c'est." : "Touche la photo pour l'agrandir."}</p></section>`;
   }
   return `<section class="box"><div class="label">${esc(p)} · ton ${v.mot}</div><p class="word">${esc(u ? g.und : g.civ)}</p>
     <p class="note">Retiens-${v.le} bien. Tu ne sais pas si tu es civil ou undercover.</p></section>`;
@@ -137,6 +138,11 @@ const V = {
           <div class="label">Paquets</div>
           ${Paquets.selector(isActive)}
         </section>`}
+        ${img ? `<section class="field">
+          <div class="label">Infos sur la photo reçue</div>
+          <div class="seg">${[[true, "Avec"], [false, "Sans"]].map(([k, l]) => `<button data-a="dinfo" data-k="${k}" aria-pressed="${(S.dealInfo !== false) === k}">${l}</button>`).join("")}</div>
+          <p class="note">Nom et description de la photo au moment de la recevoir. Toujours disponibles à la fin.</p>
+        </section>` : ""}
         ${simPicker(S.sim, img ? "images" : "mots")}
       </div>
     </details>
@@ -258,7 +264,10 @@ const infos = {};
 const wikiSearch = name => "https://fr.wikipedia.org/w/index.php?search=" + encodeURIComponent(name);
 const commonsPage = src => "https://commons.wikimedia.org/wiki/File:" + src.split("/").slice(-2)[0];
 function infoSheet() {
-  const { src, name } = S.info, i = infos[name];
+  const { src, name, bare } = S.info, i = infos[name];
+  if (bare) return `<div class="lightbox" role="dialog" aria-modal="true" aria-label="Ta photo en grand" data-a="infox">
+    <button class="lb-close" data-a="infox" aria-label="Fermer">×</button>
+    <img class="lb-img lb-only" src="${esc(src)}" alt="Ta photo"></div>`;
   return `<div class="lightbox" role="dialog" aria-modal="true" aria-label="${esc(name)}" data-a="infox">
     <button class="lb-close" data-a="infox" aria-label="Fermer">×</button>
     <img class="lb-img" src="${esc(src)}" alt="${esc(name)}">
@@ -286,7 +295,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && S.info) { 
 
 function render(focusId) {
   app.innerHTML = V[S.screen]() + (S.info ? infoSheet() : "");
-  if (S.info) loadInfo(S.info.name);
+  if (S.info && !S.info.bare) loadInfo(S.info.name);
   if (S.screen !== lastScreen) {
     window.scrollTo(0, 0); lastScreen = S.screen; fx.enter(app);
     fx.buzz({ word: 15, peekword: 15, out: 60, result: [40, 60, 90] }[S.screen]);
@@ -360,6 +369,8 @@ app.addEventListener("click", e => {
     case "nw": S.nW = +b.dataset.k; if (S.nU + S.nW > eff().m) S.nU = Math.max(0, eff().m - S.nW); if (!S.nW && !S.nU) S.nU = 1; return render();
     case "mode": S.mode = b.dataset.k; return render();
     case "info": S.info = { src: b.dataset.src, name: b.dataset.name }; return render();
+    case "zoom": S.info = { src: b.dataset.src, name: "", bare: true }; return render();
+    case "dinfo": S.dealInfo = b.dataset.k === "true"; return render();
     case "infox": if (e.target.closest(".lb-body") && !e.target.closest(".lb-close")) return; S.info = null; return render();
     case "sim": S.sim = +b.dataset.k; return render();
     case "ipack": S.ipacks[b.dataset.k] = !S.ipacks[b.dataset.k]; return render();
