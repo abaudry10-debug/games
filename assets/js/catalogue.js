@@ -27,5 +27,14 @@ const GAMES = [
     players: "3 – 10",
     time: "10 min",
     save: "jeux.undercover-dessin.v1"
+  },
+  {
+    title: "Le Menteur",
+    art: "menteur",
+    path: "jeux/menteur/",
+    pitch: "Un thème, une anecdote chacun. Une seule est inventée : qui ment ?",
+    players: "3 – 12",
+    time: "10 min",
+    save: "jeux.menteur.v1"
   }
 ];

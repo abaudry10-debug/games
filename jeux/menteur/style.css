@@ -1,0 +1,19 @@
+/* Styles propres au Menteur (en plus de ceux de l'Undercover) */
+.theme-card { align-items: center; text-align: center; gap: 12px; padding: 24px 18px; }
+.theme-txt { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: clamp(24px, 6.6vw, 32px); line-height: 1.15; text-wrap: balance; }
+.role { margin: 0; font-family: var(--f-display); font-weight: 800; font-size: clamp(30px, 9vw, 42px); line-height: 1; }
+.role.liar { color: var(--stamp); }
+.order { margin: 0; padding-left: 1.6em; display: flex; flex-direction: column; gap: 6px; font-weight: 700; font-size: 19px; }
+.order li::marker { font-family: var(--f-mono); font-weight: 500; color: var(--muted); }
+.timer { font-family: var(--f-mono); font-weight: 600; font-size: 40px; font-variant-numeric: tabular-nums; line-height: 1; }
+.timer.done { color: var(--stamp); }
+.tally { display: flex; flex-direction: column; gap: 8px; }
+.t { display: grid; grid-template-columns: minmax(0, 7.5em) minmax(0, 1fr) 2ch; gap: 10px; align-items: center; }
+.t span:first-child { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.t.liar span:first-child { color: var(--stamp); }
+.bar { height: 14px; border-radius: 2px; background: color-mix(in srgb, var(--line) 45%, transparent); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--mark); }
+.t.liar .bar i { background: var(--stamp); }
+.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; text-align: right; }
+.liars { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.liars .verdict { font-size: clamp(26px, 8vw, 40px); }

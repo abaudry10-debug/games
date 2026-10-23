@@ -1,6 +1,6 @@
 // Service worker : réseau d'abord, cache en secours (mode hors ligne).
 // Après l'ajout d'un jeu, ajoutez ses fichiers à ASSETS et changez VERSION.
-const VERSION = "v23";
+const VERSION = "v24";
 const CACHE = "jeux-entre-potes-" + VERSION;
 // Photos de l'Undercover (Wikimedia Commons) : cache à part, gardé d'une version à l'autre (seules les nouvelles photos sont téléchargées).
 const PHOTOS = "jeux-entre-potes-photos";
@@ -15,7 +15,8 @@ const ASSETS = [
   "jeux/quiz-undercover/questions.js", "jeux/quiz-undercover/game.js",
   "jeux/undercover/", "jeux/undercover/index.html", "jeux/undercover/style.css",
   "jeux/undercover/mots.js", "jeux/undercover/images.js", "jeux/undercover/game.js", "jeux/undercover/credits.html",
-  "jeux/undercover-dessin/", "jeux/undercover-dessin/index.html", "jeux/undercover-dessin/style.css", "jeux/undercover-dessin/game.js"
+  "jeux/undercover-dessin/", "jeux/undercover-dessin/index.html", "jeux/undercover-dessin/style.css", "jeux/undercover-dessin/game.js",
+  "jeux/menteur/", "jeux/menteur/index.html", "jeux/menteur/style.css", "jeux/menteur/themes.js", "jeux/menteur/game.js"
 ];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS))); self.skipWaiting(); });
 // Télécharge les photos manquantes, trois à la fois pour ménager Wikimedia ; si la vignette n'existe pas, garde l'original sous la même adresse.

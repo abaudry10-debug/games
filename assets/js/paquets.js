@@ -77,6 +77,13 @@ function creerPaquets(cfg) {
     return null;
   }
   const count = isActive => build(isActive).items.length;
+  // Tire un seul élément (par exemple un thème), en évitant les plus récents.
+  function draw(isActive, recent = []) {
+    const { items } = build(isActive);
+    if (!items.length) return null;
+    const fresh = items.filter(i => !recent.includes(i.n)), from = fresh.length ? fresh : items, x = from[rand(from.length)];
+    return { w: x.w, n: x.n, pack: x.pack };
+  }
 
   function wordsOf(id) {
     const hidden = D.hidden[id] || [], out = [], seen = new Set();
@@ -118,7 +125,7 @@ function creerPaquets(cfg) {
     return `<div class="pk-head"><button class="pk-back" data-pk="back">← Paquets</button><strong>${esc(p.name)}</strong></div>
       <form class="pk-add" data-form="pk-add">
         <input id="pkw" type="text" maxlength="${L.max}" placeholder="${L.add}" autocomplete="off" aria-label="${L.add}">
-        <input id="pkn" type="text" maxlength="${L.max}" placeholder="${L.near}" autocomplete="off" aria-label="${L.near}">
+        ${L.near ? `<input id="pkn" type="text" maxlength="${L.max}" placeholder="${L.near}" autocomplete="off" aria-label="${L.near}">` : ""}
         <button class="btn" type="submit">Ajouter</button>
       </form>
       ${words.length > 20 ? `<input type="search" data-pk-search placeholder="${L.search}" aria-label="${L.search}">` : ""}
@@ -146,7 +153,7 @@ function creerPaquets(cfg) {
   }
   // Formulaires du conteneur ; renvoie l'id du champ à refocaliser, ou null si le formulaire n'est pas géré ici.
   function submit(form) {
-    const f = form.dataset.form, val = id => (document.getElementById(id).value || "").trim().replace(/\s+/g, " ");
+    const f = form.dataset.form, val = id => ((document.getElementById(id) || {}).value || "").trim().replace(/\s+/g, " ");
     if (f === "pk-new") { const name = val("pkname"); if (!name) return "pkname"; ui.open = newPack(name); return "pkw"; }
     if (f === "pk-add") { const w = val("pkw"), n = val("pkn"); if (!w) return "pkw"; addWord(ui.open, w, n); return "pkw"; }
     return null;
@@ -158,7 +165,7 @@ function creerPaquets(cfg) {
     document.querySelectorAll(".pk-words .chip").forEach(c => { c.hidden = !!q && !c.dataset.n.includes(q); });
   });
 
-  return { pick, count, selector, manager, handle, submit, importPairs, themeLabel, norm, ui };
+  return { pick, draw, count, selector, manager, handle, submit, importPairs, themeLabel, norm, ui };
 }
 
 // Proximité orthographique et sonore entre deux mots (« Macron » et « Macaron »).

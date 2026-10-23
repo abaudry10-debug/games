@@ -162,3 +162,6 @@ a { color: inherit; }
 .pk-words { max-height: 320px; overflow-y: auto; }
 .pk-words .chip { font-weight: 400; }
 .seg [data-pk="more"] { border-style: dashed; color: var(--muted); font-weight: 400; }
+.game-menteur .art { background: color-mix(in srgb, var(--stamp) 16%, var(--card)); }
+.nose { transform-box: fill-box; transform-origin: 0 50%; animation: nose 3.6s ease-in-out infinite; }
+@keyframes nose { 0%, 20% { transform: scaleX(.35); } 55%, 80% { transform: scaleX(1); } 100% { transform: scaleX(.35); } }

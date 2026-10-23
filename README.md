@@ -23,6 +23,7 @@ jeux/undercover/           Undercover classique (civils, undercovers, Mr White)
   images.js                Banque de paires de photos du mode Images (Wikimedia Commons)
   credits.html             Auteurs et licences des photos
 jeux/undercover-dessin/    Undercover version dessin (réutilise les mots de l'Undercover)
+jeux/menteur/              Le Menteur (thèmes dans themes.js)
 sw.js                      Service worker (cache hors ligne)
 manifest.webmanifest       Nom et icône de l'app installée
 ```
