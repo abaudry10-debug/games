@@ -36,6 +36,9 @@ function head(stamp) {
   const back = S.screen === "setup" ? `<a class="back" href="../../">← Tous les jeux</a>` : "";
   return `<header class="head"><div class="head-l">${back}<div class="brand">Undercover<br><em>Dessin</em></div></div><div class="head-r">${S.screen === "setup" ? fx.soundButton() : `<div class="stamp">${esc(stamp)}</div>`}</div></header>`;
 }
+// Le classement ne vaut que pour la tablée en cours : il repart de zéro dès que la liste des joueurs change.
+function newTable() { S.scores = {}; S.roundNo = 0; }
+
 function scoreList(delta) {
   const rows = S.players.map(p => ({ p, s: S.scores[p] || 0, d: delta ? delta[p] || 0 : null })).sort((a, b) => b.s - a.s);
   return `<ol class="scores">${rows.map((r, i) => `<li><span class="rk">${i + 1}</span><span class="nm">${esc(r.p)}</span><span class="dl">${r.d ? "+" + r.d : ""}</span><span class="pt">${r.s} pt${r.s > 1 ? "s" : ""}</span></li>`).join("")}</ol>`;
@@ -53,7 +56,7 @@ const passBox = p => `<section class="box pass"><div class="label">Passe le tél
 
 const V = {
   setup() {
-    const n = S.players.length, e = eff(), canStart = n >= 3 && canPlay(), hasScores = S.players.some(p => S.scores[p]);
+    const n = S.players.length, e = eff(), canStart = n >= 3 && canPlay();
     return `${head("Atelier")}
     <section class="field">
       <div class="label">Joueurs · ${n}</div>
@@ -90,8 +93,6 @@ const V = {
     </details>
     <button class="btn big red" data-a="start" ${canStart ? "" : "disabled"}>Jouer</button>
     ${n < 3 ? `<p class="note center">Au moins 3 joueurs.</p>` : !canPlay() ? `<p class="note center">Activez au moins un paquet.</p>` : ""}
-    ${hasScores ? `<details><summary>Classement</summary><div class="dbody">${scoreList()}
-      <button class="btn ghost quiet" data-a="reset">${S.arm === "reset" ? "Confirmer la remise à zéro" : "Remettre à zéro"}</button></div></details>` : ""}
     <details id="packBox" ${S.openPacks ? "open" : ""}>
       <summary>Paquets</summary>
       <div class="dbody">${Paquets.manager()}</div>
@@ -290,7 +291,7 @@ app.addEventListener("click", e => {
   const a = b.dataset.a, g = S.g;
   if (a !== "reset" && a !== "quit") S.arm = "";
   switch (a) {
-    case "rm": S.players.splice(+b.dataset.i, 1); S.example = false; S.msg = ""; return render();
+    case "rm": S.players.splice(+b.dataset.i, 1); S.example = false; S.msg = ""; newTable(); return render();
     case "nu": S.nU = +b.dataset.k; if (S.nU + S.nW > eff().m) S.nW = Math.max(0, eff().m - S.nU); if (!S.nW && !S.nU) S.nU = 1; return render();
     case "nw": S.nW = +b.dataset.k; if (S.nU + S.nW > eff().m) S.nU = Math.max(0, eff().m - S.nW); if (!S.nW && !S.nU) S.nU = 1; return render();
     case "sim": S.sim = +b.dataset.k; return render();
@@ -335,7 +336,7 @@ app.addEventListener("submit", e => {
   if (S.example) { S.players = []; S.example = false; }
   if (S.players.some(p => p.toLowerCase() === v.toLowerCase())) { S.msg = `${v} est déjà dans la liste.`; return render("newp"); }
   if (S.players.length >= 10) { S.msg = "10 joueurs maximum."; return render("newp"); }
-  S.players.push(v); S.msg = ""; render("newp");
+  S.players.push(v); S.msg = ""; newTable(); render("newp");
 });
 
 function start(data) {
