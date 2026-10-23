@@ -90,9 +90,13 @@ function secret(p) {
   const g = S.g, v = voc(), u = g.roles[p] === "u";
   if (g.roles[p] === "w") return `<section class="box"><div class="label">${esc(p)} · ton rôle</div><p class="word">Mr White</p>
     <p class="note">Tu n'as pas ${v.mot === "mot" ? "de mot" : "d'image"}. Écoute les autres, bluffe, et si tu es éliminé tu pourras tenter de deviner ${v.civ}.</p></section>`;
-  const shown = g.mode === "images" ? `<img class="photo" src="${esc(u ? g.und : g.civ)}" alt="${esc(u ? g.undL : g.civL)}">`
-    : `<p class="word">${esc(u ? g.und : g.civ)}</p>`;
-  return `<section class="box"><div class="label">${esc(p)} · ton ${v.mot}</div>${shown}
+  if (g.mode === "images") {
+    const src = u ? g.und : g.civ, name = u ? g.undL : g.civL;
+    return `<section class="box photo-card"><div class="label">${esc(p)} · ton image</div>
+      <button class="photo-btn" data-a="info" data-src="${esc(src)}" data-name="${esc(name)}" aria-label="Agrandir la photo et en savoir plus"><img class="photo big" src="${esc(src)}" alt="${esc(name)}"><span class="info-dot" aria-hidden="true">i</span></button>
+      <p class="note">Tu ne sais pas si tu es civil ou undercover. Touche la photo pour l'agrandir et savoir ce que c'est.</p></section>`;
+  }
+  return `<section class="box"><div class="label">${esc(p)} · ton ${v.mot}</div><p class="word">${esc(u ? g.und : g.civ)}</p>
     <p class="note">Retiens-${v.le} bien. Tu ne sais pas si tu es civil ou undercover.</p></section>`;
 }
 
@@ -236,18 +240,53 @@ const V = {
     return `${head("Fin de partie")}
     <div class="verdict-wrap"><div class="verdict">${title}</div></div>
     <p class="lead center">${line}</p>
-    <section class="box"><div class="label">Les ${voc().mots} · ressemblance ${(SIM_LEVELS.find(s => s.n === g.sim) || SIM_LEVELS[3]).label.toLowerCase()}</div>
-      <div class="answers">${[["Civils", g.civ, g.civL], ["Undercover", g.und, g.undL]].map(([k, w, l]) => `<div class="ans"><span>${k}</span><strong>${g.mode === "images" ? `<img class="thumb" src="${esc(w)}" alt=""> ${esc(l)}` : esc(w)}</strong></div>`).join("")}</div></section>
+    ${g.mode === "images" ? `<section class="field"><div class="label">Les images · ressemblance ${simName(g.sim).toLowerCase()}</div>
+      <div class="duo-photos">${[["Civils", g.civ, g.civL, false], ["Imposteur", g.und, g.undL, true]].map(([k, src, l, imp]) => `<button class="pcard${imp ? " imp" : ""}" data-a="info" data-src="${esc(src)}" data-name="${esc(l)}" aria-label="${k} : ${esc(l)}, en savoir plus">
+        <img src="${esc(src)}" alt=""><span class="pc-tag">${k}</span><span class="info-dot" aria-hidden="true">i</span><span class="pc-name">${esc(l)}</span></button>`).join("")}</div></section>`
+    : `<section class="box"><div class="label">Les mots · ressemblance ${simName(g.sim).toLowerCase()}</div>
+      <div class="answers">${[["Civils", g.civ, false], ["Undercover", g.und, true]].map(([k, w, imp]) => `<div class="ans${imp ? " imp" : ""}"><span>${k}</span><strong>${esc(w)}</strong></div>`).join("")}</div></section>`}
     <section class="field"><div class="label">Les rôles</div>
-      <div class="answers">${S.players.map(p => `<div class="ans"><span>${esc(p)}${g.alive.includes(p) ? "" : ` <small class="note">éliminé</small>`}</span><strong>${ROLE[g.roles[p]]}</strong></div>`).join("")}</div></section>
+      <div class="answers">${S.players.map(p => `<div class="ans${g.roles[p] === "c" ? "" : " imp"}"><span>${esc(p)}${g.alive.includes(p) ? "" : ` <small class="note">éliminé</small>`}</span><strong>${ROLE[g.roles[p]]}</strong></div>`).join("")}</div></section>
     <section class="box"><div class="label">Classement après la partie ${g.no}</div>${scoreList(g.delta)}</section>
     <button class="btn big red" data-a="start">Nouvelle partie</button>
     <button class="btn ghost" data-a="menu">Retour au menu</button>`;
   }
 };
 
+// Fiche d'une photo : en grand, avec le résumé Wikipédia (chargé depuis le téléphone, gardé hors ligne par sw.js).
+const infos = {};
+const wikiSearch = name => "https://fr.wikipedia.org/w/index.php?search=" + encodeURIComponent(name);
+const commonsPage = src => "https://commons.wikimedia.org/wiki/File:" + src.split("/").slice(-2)[0];
+function infoSheet() {
+  const { src, name } = S.info, i = infos[name];
+  return `<div class="lightbox" role="dialog" aria-modal="true" aria-label="${esc(name)}" data-a="infox">
+    <button class="lb-close" data-a="infox" aria-label="Fermer">×</button>
+    <img class="lb-img" src="${esc(src)}" alt="${esc(name)}">
+    <div class="lb-body">
+      <h3>${esc(name)}</h3>
+      <p class="lb-text" id="lbText">${i ? esc(i.text) : "Chargement de la description…"}</p>
+      <div class="row"><a class="btn ghost" id="lbWiki" href="${esc(i && i.url ? i.url : wikiSearch(name))}" target="_blank" rel="noopener">Lire sur Wikipédia</a>
+        <a class="btn ghost quiet" href="${esc(commonsPage(src))}" target="_blank" rel="noopener">Source de la photo</a></div>
+    </div></div>`;
+}
+async function loadInfo(name) {
+  if (infos[name]) return;
+  try {
+    const url = "https://fr.wikipedia.org/w/api.php?action=query&format=json&formatversion=2&origin=*&redirects=1&generator=search&gsrlimit=1"
+      + "&prop=extracts|info&exintro=1&explaintext=1&exsentences=3&inprop=url&gsrsearch=" + encodeURIComponent(name);
+    const pg = ((await (await fetch(url)).json()).query || {}).pages;
+    infos[name] = pg && pg[0] ? { text: pg[0].extract || "Pas de description disponible.", url: pg[0].fullurl } : { text: "Pas de description disponible." };
+  } catch (e) { infos[name] = null; }
+  if (!S.info || S.info.name !== name) return;
+  const t = document.getElementById("lbText"), a = document.getElementById("lbWiki");
+  if (t) t.textContent = infos[name] ? infos[name].text : "Pas de connexion : impossible de charger la description.";
+  if (a && infos[name] && infos[name].url) a.href = infos[name].url;
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape" && S.info) { S.info = null; render(); } });
+
 function render(focusId) {
-  app.innerHTML = V[S.screen]();
+  app.innerHTML = V[S.screen]() + (S.info ? infoSheet() : "");
+  if (S.info) loadInfo(S.info.name);
   if (S.screen !== lastScreen) {
     window.scrollTo(0, 0); lastScreen = S.screen; fx.enter(app);
     fx.buzz({ word: 15, peekword: 15, out: 60, result: [40, 60, 90] }[S.screen]);
@@ -320,6 +359,8 @@ app.addEventListener("click", e => {
     case "nu": S.nU = +b.dataset.k; if (S.nU + S.nW > eff().m) S.nW = Math.max(0, eff().m - S.nU); if (!S.nW && !S.nU) S.nU = 1; return render();
     case "nw": S.nW = +b.dataset.k; if (S.nU + S.nW > eff().m) S.nU = Math.max(0, eff().m - S.nW); if (!S.nW && !S.nU) S.nU = 1; return render();
     case "mode": S.mode = b.dataset.k; return render();
+    case "info": S.info = { src: b.dataset.src, name: b.dataset.name }; return render();
+    case "infox": if (e.target.closest(".lb-body") && !e.target.closest(".lb-close")) return; S.info = null; return render();
     case "sim": S.sim = +b.dataset.k; return render();
     case "ipack": S.ipacks[b.dataset.k] = !S.ipacks[b.dataset.k]; return render();
     case "pack": S.packs[b.dataset.k] = !isActive(b.dataset.k); return render();
