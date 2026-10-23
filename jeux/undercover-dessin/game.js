@@ -11,17 +11,26 @@ let S, lastScreen = null, lock = null;
 
 function defaults() {
   return { screen: "setup", players: ["Léa", "Tom", "Sam", "Inès"], example: true, packs: { classique: true, soiree: false, culture: false },
-    sim: 4, imp: "proche", tours: 2, scores: {}, used: [], roundNo: 0, g: null, msg: "", arm: "" };
+    sim: 4, nU: 1, nW: 0, tours: 2, scores: {}, used: [], roundNo: 0, g: null, msg: "", arm: "" };
 }
 function load() { try { const raw = localStorage.getItem(KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } }
 function save() {
-  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, packs: S.packs, sim: S.sim, imp: S.imp, tours: S.tours,
+  try { localStorage.setItem(KEY, JSON.stringify({ players: S.players, packs: S.packs, sim: S.sim, nU: S.nU, nW: S.nW, tours: S.tours,
     scores: S.scores, used: S.used, roundNo: S.roundNo, g: S.g, screen: S.screen })); } catch (e) {}
 }
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const rand = n => Math.floor(Math.random() * n);
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rand(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 const pool = () => WS.filter(w => S.packs[w.p]);
+const ROLE = { c: "Civil", u: "Undercover", w: "Mr White" };
+// Les civils doivent rester majoritaires : au plus (n - 1) / 2 imposteurs (undercovers et Mr White).
+function eff() {
+  const m = Math.floor((S.players.length - 1) / 2);
+  let u = S.nU, w = S.nW;
+  if (u + w > m) { w = Math.max(0, m - u); if (u + w > m) u = m; }
+  if (u + w === 0 && m > 0) u = 1;
+  return { u, w, m };
+}
 const color = p => COLORS[S.players.indexOf(p) % COLORS.length];
 const dot = p => `<i class="dot" style="background:${color(p)}"></i>`;
 
@@ -55,11 +64,11 @@ function scoreList(delta) {
   return `<ol class="scores">${rows.map((r, i) => `<li><span class="rk">${i + 1}</span><span class="nm">${esc(r.p)}</span><span class="dl">${r.d ? "+" + r.d : ""}</span><span class="pt">${r.s} pt${r.s > 1 ? "s" : ""}</span></li>`).join("")}</ol>`;
 }
 function secret(p) {
-  const g = S.g;
-  if (g.imps.includes(p) && !g.und) return `<section class="box"><div class="label">${esc(p)} · ton rôle</div><p class="word">Imposteur</p>
+  const g = S.g, r = g.roles[p];
+  if (r === "w") return `<section class="box"><div class="label">${esc(p)} · ton rôle</div><p class="word">Mr White</p>
     <p class="theme">Thème : ${esc(theme(g.cat))}</p><p class="note">Tu n'as pas de mot. Dessine comme si tu savais, et devine le mot des autres.</p></section>`;
-  return `<section class="box"><div class="label">${esc(p)} · ton mot</div><p class="word">${esc(g.imps.includes(p) ? g.und : g.civ)}</p>
-    ${g.und ? `<p class="note">Retiens-le. Tu ne sais pas si tu es l'imposteur.</p>` : `<p class="theme">Thème : ${esc(theme(g.cat))}</p>`}</section>`;
+  return `<section class="box"><div class="label">${esc(p)} · ton mot</div><p class="word">${esc(r === "u" ? g.und : g.civ)}</p>
+    ${g.und ? `<p class="note">Retiens-le. Tu ne sais pas si tu es l'undercover.</p>` : ""}</section>`;
 }
 const board = (hint = "") => `<div class="board" id="board"><canvas id="cv"></canvas>${hint ? `<div class="hint">${hint}</div>` : ""}</div>`;
 const legend = () => `<div class="legend">${S.players.map(p => `<span>${dot(p)}${esc(p)}</span>`).join("")}</div>`;
@@ -67,7 +76,7 @@ const passBox = p => `<section class="box pass"><div class="label">Passe le tél
 
 const V = {
   setup() {
-    const n = S.players.length, canStart = n >= 3 && pool().length > 0, hasScores = S.players.some(p => S.scores[p]);
+    const n = S.players.length, e = eff(), canStart = n >= 3 && pool().length > 0, hasScores = S.players.some(p => S.scores[p]);
     return `${head("Atelier")}
     <section class="field">
       <div class="label">Joueurs · ${n}</div>
@@ -78,12 +87,19 @@ const V = {
       </form>
       ${S.msg ? `<p class="err">${esc(S.msg)}</p>` : ""}
     </section>
-    <section class="field"><div class="label">Imposteur</div>
-      <div class="seg full">${[["proche", "Mot proche"], ["aucun", "Sans mot"]].map(([k, l]) => `<button data-a="imp" data-k="${k}" aria-pressed="${S.imp === k}">${l}</button>`).join("")}</div></section>
     <details id="setBox" class="settings" ${S.openSet ? "open" : ""}>
-      <summary>Réglages<span class="sum">${S.imp === "proche" ? simName(S.sim) + " · " : ""}${S.tours} tour${S.tours > 1 ? "s" : ""} de dessin</span></summary>
+      <summary>Réglages<span class="sum">${e.u} undercover${e.u > 1 ? "s" : ""} · ${e.w} Mr White · ${S.tours} trait${S.tours > 1 ? "s" : ""}${e.u ? " · " + simName(S.sim) : ""}</span></summary>
       <div class="dbody">
-        ${S.imp === "proche" ? simPicker(S.sim, "mots") : ""}
+        <section class="field">
+          <div class="label">Undercovers</div>
+          <div class="seg">${[0, 1, 2, 3].map(k => `<button data-a="nu" data-k="${k}" aria-pressed="${e.u === k}" ${k > e.m || (k === 0 && e.w === 0) ? "disabled" : ""}>${k}</button>`).join("")}</div>
+          <p class="note">Mot proche, sans savoir qu'ils sont undercovers.</p>
+        </section>
+        <section class="field">
+          <div class="label">Mr White</div>
+          <div class="seg">${[0, 1, 2, 3].map(k => `<button data-a="nw" data-k="${k}" aria-pressed="${e.w === k}" ${k > e.m || (k === 0 && e.u === 0) ? "disabled" : ""}>${k}</button>`).join("")}</div>
+          <p class="note">Aucun mot, seulement le thème.</p>
+        </section>
         <section class="field">
           <div class="label">Tours de dessin</div>
           <div class="seg">${[1, 2, 3].map(k => `<button data-a="tours" data-k="${k}" aria-pressed="${S.tours === k}">${k} trait${k > 1 ? "s" : ""} chacun</button>`).join("")}</div>
@@ -92,6 +108,7 @@ const V = {
           <div class="label">Paquets</div>
           <div class="seg">${Object.entries(PACKS).map(([k, v]) => `<button data-a="pack" data-k="${k}" aria-pressed="${!!S.packs[k]}">${v}<span class="count">${WS.filter(w => w.p === k).length}</span></button>`).join("")}</div>
         </section>
+        ${e.u ? simPicker(S.sim, "mots") : ""}
       </div>
     </details>
     <button class="btn big red" data-a="start" ${canStart ? "" : "disabled"}>Jouer</button>
@@ -102,12 +119,12 @@ const V = {
       <summary>Règles du jeu</summary>
       <div class="dbody">
         <ol>
-          <li>Chacun découvre son mot en secret. L'imposteur a un mot proche sans le savoir, ou aucun mot (il connaît alors seulement le thème).</li>
+          <li>Chacun découvre son mot en secret. Les undercovers ont un mot proche sans le savoir. Les Mr White n'ont aucun mot, seulement le thème.</li>
           <li>À tour de rôle, chacun ajoute un seul trait au dessin, sans lever le doigt.</li>
           <li>Ensuite, on vote pour désigner l'imposteur.</li>
-          <li>Imposteur démasqué : il peut encore gagner s'il devine le mot des autres.</li>
+          <li>Imposteur démasqué : il peut encore se rattraper s'il devine le mot des civils.</li>
         </ol>
-        <p><strong>Points :</strong> imposteur pas démasqué, +2 pour lui. Démasqué mais il trouve le mot, +1 pour lui. Démasqué et raté, +1 pour chaque autre joueur.</p>
+        <p><strong>Points :</strong> chaque imposteur pas démasqué, +2. Démasqué mais il trouve le mot, +1 pour lui. Démasqué et raté, +1 pour chaque civil.</p>
       </div>
     </details>`;
   },
@@ -145,25 +162,27 @@ const V = {
     <button class="btn ghost" data-a="peek">Revoir mon mot</button>`;
   },
   guess() {
-    const g = S.g, p = g.imps[0];
+    const g = S.g, p = g.accused, r = g.roles[p];
     return `${head("Démasqué")}
-    <div class="verdict-wrap"><div class="verdict">Démasqué</div></div>
-    <p class="lead center">${esc(p)} était bien l'imposteur${g.und ? ` (son mot : « ${esc(g.und)} »)` : ""}.</p>
+    <div class="verdict-wrap"><div class="verdict">${ROLE[r]}</div></div>
+    <p class="lead center">${esc(p)} était bien ${r === "w" ? "Mr White" : `undercover (son mot : « ${esc(g.und)} »)`}.</p>
     <section class="box"><div class="label">Dernière chance</div>
       <p class="note">${esc(p)}, dis à voix haute le mot des autres. Les autres jugent.</p>
       <div class="row"><button class="btn red" data-a="found" data-ok="1">Trouvé</button><button class="btn ghost" data-a="found" data-ok="">Raté</button></div></section>`;
   },
   result() {
-    const g = S.g, caught = g.imps.includes(g.accused), p = g.imps[0];
+    const g = S.g, caught = g.imps.includes(g.accused), p = g.accused;
     const title = !caught ? "Raté" : g.found ? "Rattrapé" : "Démasqué";
-    const line = !caught ? `${esc(g.accused)} était innocent. ${esc(p)} était l'imposteur.`
-      : g.found ? `${esc(p)} a été démasqué… mais a trouvé le mot.` : `${esc(p)} a été démasqué et n'a pas trouvé le mot.`;
+    const others = g.imps.filter(x => x !== p).map(x => `${esc(x)} (${ROLE[g.roles[x]]})`);
+    const line = !caught ? `${esc(p)} était innocent. Imposteur${g.imps.length > 1 ? "s" : ""} : ${g.imps.map(x => `${esc(x)} (${ROLE[g.roles[x]]})`).join(", ")}.`
+      : (g.found ? `${esc(p)} a été démasqué… mais a trouvé le mot.` : `${esc(p)} a été démasqué et n'a pas trouvé le mot.`) + (others.length ? ` ${others.join(", ")} s'en sort${others.length > 1 ? "ent" : ""}.` : "");
     return `${head("Verdict")}
     <div class="verdict-wrap"><div class="verdict">${title}</div></div>
     <p class="lead center">${line}</p>
     <section class="box"><div class="label">Les mots</div><div class="answers">
-      <div class="ans"><span>Les autres</span><strong>${esc(g.civ)}</strong></div>
-      <div class="ans"><span>L'imposteur</span><strong>${g.und ? esc(g.und) : "Aucun mot"}</strong></div></div></section>
+      <div class="ans"><span>Civils</span><strong>${esc(g.civ)}</strong></div>
+      ${g.und ? `<div class="ans"><span>Undercover</span><strong>${esc(g.und)}</strong></div>` : ""}
+      ${g.imps.some(x => g.roles[x] === "w") ? `<div class="ans"><span>Mr White</span><strong>Aucun mot</strong></div>` : ""}</div></section>
     ${board()}${legend()}
     <button class="btn ghost" data-a="dl">Enregistrer le dessin</button>
     <section class="box"><div class="label">Classement après la manche ${g.no}</div>${scoreList(g.delta)}</section>
@@ -247,15 +266,16 @@ async function wake() {
 function newRound() {
   const all = pool(); if (S.players.length < 3 || !all.length) return;
   const players = S.players.slice(), first = S.roundNo % players.length;
-  let civ, und = null, cat;
-  if (S.imp === "proche") { const w = pickPair(all, S.sim), flip = rand(2); civ = flip ? w.b : w.a; und = flip ? w.a : w.b; cat = w.cat; }
-  else { const w = pickPair(all, 4); civ = rand(2) ? w.a : w.b; cat = w.cat; }
+  const e = eff(), w = pickPair(all, e.u ? S.sim : 4), flip = rand(2);
+  const civ = flip ? w.b : w.a, und = e.u ? (flip ? w.a : w.b) : null, cat = w.cat;
   S.roundNo += 1;
-  const imps = [players[rand(players.length)]];
-  // Ordre de dessin : on ne commence jamais par l'imposteur sans mot.
-  let base = shuffle(players);
-  if (!und && base[0] === imps[0]) base.push(base.shift());
-  S.g = { no: S.roundNo, civ, und, cat, imps, deal: players.slice(first).concat(players.slice(0, first)), idx: 0,
+  const roles = {};
+  shuffle(players).forEach((p, i) => { roles[p] = i < e.u ? "u" : i < e.u + e.w ? "w" : "c"; });
+  const imps = players.filter(p => roles[p] !== "c");
+  // Ordre de dessin : un Mr White ne commence jamais.
+  const base = shuffle(players), k = base.findIndex(p => roles[p] !== "w");
+  if (k > 0) base.unshift(base.splice(k, 1)[0]);
+  S.g = { no: S.roundNo, civ, und, cat, roles, imps, deal: players.slice(first).concat(players.slice(0, first)), idx: 0,
     order: Array.from({ length: S.tours }, () => base).flat(), turn: 0, strokes: [], pending: null,
     accused: null, found: false, scored: false, delta: null, peek: null, peekBack: null };
   S.screen = "pass"; S.arm = ""; S.msg = "";
@@ -267,7 +287,7 @@ function scoreRound() {
   const caught = g.imps.includes(g.accused); g.delta = {};
   S.players.forEach(p => {
     const imp = g.imps.includes(p);
-    const d = !caught ? (imp ? 2 : 0) : g.found ? (imp ? 1 : 0) : (imp ? 0 : 1);
+    const d = !imp ? (caught && !g.found ? 1 : 0) : p !== g.accused ? 2 : g.found ? 1 : 0;
     g.delta[p] = d; S.scores[p] = (S.scores[p] || 0) + d;
   });
   g.scored = true;
@@ -286,7 +306,8 @@ app.addEventListener("click", e => {
   if (a !== "reset" && a !== "quit") S.arm = "";
   switch (a) {
     case "rm": S.players.splice(+b.dataset.i, 1); S.example = false; S.msg = ""; return render();
-    case "imp": S.imp = b.dataset.k; return render();
+    case "nu": S.nU = +b.dataset.k; if (S.nU + S.nW > eff().m) S.nW = Math.max(0, eff().m - S.nU); if (!S.nW && !S.nU) S.nU = 1; return render();
+    case "nw": S.nW = +b.dataset.k; if (S.nU + S.nW > eff().m) S.nU = Math.max(0, eff().m - S.nW); if (!S.nW && !S.nU) S.nU = 1; return render();
     case "sim": S.sim = +b.dataset.k; return render();
     case "tours": S.tours = +b.dataset.k; return render();
     case "pack": S.packs[b.dataset.k] = !S.packs[b.dataset.k]; return render();
@@ -332,7 +353,12 @@ function start(data) {
   else {
     S = defaults();
     const saved = load();
-    if (saved) { Object.assign(S, saved); S.example = false; }
+    if (saved) {
+      Object.assign(S, saved); S.example = false;
+      if (saved.imp && saved.nU === undefined) { S.nU = saved.imp === "aucun" ? 0 : 1; S.nW = saved.imp === "aucun" ? 1 : 0; }
+      delete S.imp;
+      if (S.g && !S.g.roles) S.g = null;
+    }
     else {
       // Première visite : reprend les joueurs de l'Undercover s'il y en a.
       const uc = (() => { try { return JSON.parse(localStorage.getItem("jeux.undercover.v1") || "null"); } catch (e) { return null; } })();

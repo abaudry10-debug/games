@@ -112,16 +112,16 @@ const V = {
     </section>
     <div class="seg full">${[["mots", "Mots"], ["images", "Images"]].map(([k, l]) => `<button data-a="mode" data-k="${k}" aria-pressed="${S.mode === k}">${l}</button>`).join("")}</div>
     <details id="setBox" class="settings" ${S.openSet ? "open" : ""}>
-      <summary>Réglages<span class="sum">${simName(S.sim)} · ${e.u} undercover${e.u > 1 ? "s" : ""}${e.w ? " · Mr White" : ""}</span></summary>
+      <summary>Réglages<span class="sum">${e.u} undercover${e.u > 1 ? "s" : ""} · ${e.w} Mr White · ${simName(S.sim)}</span></summary>
       <div class="dbody">
-        ${simPicker(S.sim, img ? "images" : "mots")}
         <section class="field">
           <div class="label">Undercovers</div>
           <div class="seg">${[0, 1, 2, 3].map(k => `<button data-a="nu" data-k="${k}" aria-pressed="${e.u === k}" ${k > e.m || (k === 0 && e.w === 0) ? "disabled" : ""}>${k}</button>`).join("")}</div>
         </section>
         <section class="field">
           <div class="label">Mr White</div>
-          <div class="seg">${[0, 1].map(k => `<button data-a="nw" data-k="${k}" aria-pressed="${e.w === k}" ${k === 1 && e.m < 1 ? "disabled" : ""}>${k ? "Avec" : "Sans"}</button>`).join("")}</div>
+          <div class="seg">${[0, 1, 2, 3].map(k => `<button data-a="nw" data-k="${k}" aria-pressed="${e.w === k}" ${k > e.m || (k === 0 && e.u === 0) ? "disabled" : ""}>${k}</button>`).join("")}</div>
+          <p class="note">${n - e.u - e.w} civil${n - e.u - e.w > 1 ? "s" : ""} : les civils doivent rester les plus nombreux.</p>
         </section>
         ${img ? `<section class="field">
           <div class="label">Paquets</div>
@@ -130,6 +130,7 @@ const V = {
           <div class="label">Paquets</div>
           <div class="seg">${Object.entries(PACKS).map(([k, v]) => `<button data-a="pack" data-k="${k}" aria-pressed="${!!S.packs[k]}">${v}<span class="count">${WS.filter(w => w.p === k).length}</span></button>`).join("")}</div>
         </section>`}
+        ${simPicker(S.sim, img ? "images" : "mots")}
       </div>
     </details>
     <button class="btn big red" data-a="start" ${canStart ? "" : "disabled"}>Jouer</button>
@@ -159,7 +160,7 @@ const V = {
         <p><strong>Mode Images :</strong> même principe avec des images. Chacun décrit son image sans la nommer, et Mr White doit deviner l'image des civils. Les photos viennent de Wikimedia Commons (<a href="credits.html">auteurs et licences</a>). Il faut Internet la première fois, ensuite elles restent sur le téléphone.</p>
         <p><strong>Taux de ressemblance :</strong> de « très faible » (deux mots ou photos sans aucun rapport) à « très haut » (presque identiques, comme deux présidents français). Les paires perso sont utilisées aux niveaux moyen, haut et très haut.</p>
         <p>Un joueur a oublié son mot ou son image ? Bouton « Revoir » pendant la partie.</p>
-        <p><strong>Points :</strong> victoire des civils, 2 points par civil. Victoire des imposteurs, 10 points par undercover et 6 points pour Mr White s'il est encore en jeu. Mr White qui trouve le mot marque 6 points.</p>
+        <p><strong>Points :</strong> victoire des civils, 2 points par civil. Victoire des imposteurs, 10 points par undercover et 6 points pour chaque Mr White encore en jeu. Un Mr White qui trouve le mot marque 6 points.</p>
       </div>
     </details>`;
   },
@@ -313,8 +314,8 @@ app.addEventListener("click", e => {
   if (a !== "reset" && a !== "quit") S.arm = "";
   switch (a) {
     case "rm": S.players.splice(+b.dataset.i, 1); S.example = false; S.msg = ""; return render();
-    case "nu": S.nU = +b.dataset.k; if (S.nU + S.nW > eff().m) S.nW = 0; return render();
-    case "nw": S.nW = +b.dataset.k; if (S.nW && S.nU + 1 > eff().m) S.nU = Math.max(0, eff().m - 1); if (!S.nW && !S.nU) S.nU = 1; return render();
+    case "nu": S.nU = +b.dataset.k; if (S.nU + S.nW > eff().m) S.nW = Math.max(0, eff().m - S.nU); if (!S.nW && !S.nU) S.nU = 1; return render();
+    case "nw": S.nW = +b.dataset.k; if (S.nU + S.nW > eff().m) S.nU = Math.max(0, eff().m - S.nW); if (!S.nW && !S.nU) S.nU = 1; return render();
     case "mode": S.mode = b.dataset.k; return render();
     case "sim": S.sim = +b.dataset.k; return render();
     case "ipack": S.ipacks[b.dataset.k] = !S.ipacks[b.dataset.k]; return render();

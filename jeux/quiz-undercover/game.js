@@ -71,9 +71,8 @@ const V = {
       ${S.msg ? `<p class="err">${esc(S.msg)}</p>` : ""}
     </section>
     <details id="setBox" class="settings" ${S.openSet ? "open" : ""}>
-      <summary>Réglages<span class="sum">${simName(S.sim)} · ${effImp()} imposteur${effImp() > 1 ? "s" : ""}</span></summary>
+      <summary>Réglages<span class="sum">${effImp()} imposteur${effImp() > 1 ? "s" : ""} · ${simName(S.sim)}</span></summary>
       <div class="dbody">
-        ${simPicker(S.sim, "questions")}
         <section class="field">
           <div class="label">Imposteurs</div>
           <div class="seg">${[1, 2].map(k => `<button data-a="imp" data-k="${k}" aria-pressed="${effImp() === k}" ${k === 2 && n < 6 ? "disabled" : ""}>${k}</button>`).join("")}</div>
@@ -83,6 +82,7 @@ const V = {
           <div class="label">Paquets</div>
           <div class="seg">${Object.entries(PACKS).map(([k, v]) => `<button data-a="pack" data-k="${k}" aria-pressed="${!!S.packs[k]}">${v}<span class="count">${QS.filter(q => q.p === k).length}</span></button>`).join("")}</div>
         </section>
+        ${simPicker(S.sim, "questions")}
       </div>
     </details>
     <button class="btn big red" data-a="start" ${canStart ? "" : "disabled"}>Jouer</button>

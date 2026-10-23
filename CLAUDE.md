@@ -17,4 +17,4 @@ En ligne sur GitHub Pages : https://abaudry10-debug.github.io/games/ (déployé 
 ## Jeux
 - `jeux/quiz-undercover/` : chacun désigne un joueur en réponse à une question ; l'imposteur a reçu une question proche mais différente ; « Revoir ma question » dès qu'on a répondu. Questions dans `questions.js`.
 - `jeux/undercover/` : Undercover classique (civils, undercovers, Mr White), modes Mots et Images, avec « Revoir mon mot » dès la distribution. Paires de mots dans `mots.js`, paires de photos dans `images.js` (Wikimedia Commons, chargées par le téléphone et gardées hors ligne par `sw.js`, crédits dans `credits.html`).
-- `jeux/undercover-dessin/` : chacun ajoute un trait au même dessin ; l'imposteur a un mot proche ou aucun mot. Réutilise `../undercover/mots.js` et `../undercover/style.css`.
+- `jeux/undercover-dessin/` : chacun ajoute un trait au même dessin ; undercovers (mot proche) et Mr White (aucun mot, thème seulement), combinables. Réutilise `../undercover/mots.js` et `../undercover/style.css`.
