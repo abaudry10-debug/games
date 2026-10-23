@@ -120,7 +120,7 @@ const V = {
     </section>
     <div class="seg full">${[["mots", "Mots"], ["images", "Images"]].map(([k, l]) => `<button data-a="mode" data-k="${k}" aria-pressed="${S.mode === k}">${l}</button>`).join("")}</div>
     <details id="setBox" class="settings" ${S.openSet ? "open" : ""}>
-      <summary>Réglages<span class="sum">${e.u} undercover${e.u > 1 ? "s" : ""} · ${e.w} Mr White · ${simName(S.sim)}</span></summary>
+      ${settingsSummary([`${e.u} undercover${e.u > 1 ? "s" : ""}`, `${e.w} Mr White`, simName(S.sim)])}
       <div class="dbody">
         <section class="field">
           <div class="label">Undercovers</div>

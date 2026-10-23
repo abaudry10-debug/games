@@ -61,7 +61,7 @@ const V = {
       ${S.msg ? `<p class="err">${esc(S.msg)}</p>` : ""}
     </section>
     <details id="setBox" class="settings" ${S.openSet ? "open" : ""}>
-      <summary>Réglages<span class="sum">${effImp()} imposteur${effImp() > 1 ? "s" : ""} · ${simName(S.sim)}</span></summary>
+      ${settingsSummary([`${effImp()} imposteur${effImp() > 1 ? "s" : ""}`, simName(S.sim)])}
       <div class="dbody">
         <section class="field">
           <div class="label">Imposteurs</div>

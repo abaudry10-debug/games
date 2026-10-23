@@ -23,3 +23,6 @@ function simPicker(level, mode) {
     </section>`;
 }
 const simName = level => (SIM_LEVELS.find(s => s.n === level) || SIM_LEVELS[3]).label;
+
+// En-tête du bloc « Réglages » : titre et « + » sur une ligne, résumé en pastilles en dessous.
+const settingsSummary = parts => `<summary><span class="st">Réglages</span><span class="sum">${parts.filter(Boolean).map(p => `<i>${p}</i>`).join("")}</span></summary>`;

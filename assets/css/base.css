@@ -127,8 +127,11 @@ a { color: inherit; }
 .btn, .seg button, .pick button, .chip button { transition: transform .12s ease, background-color .15s ease, border-color .15s ease; }
 .btn:active:not(:disabled), .seg button:active:not(:disabled), .pick button:active { transform: scale(.96); }
 .chip.ex { opacity: .5; border-style: dashed; }
-.settings summary { align-items: baseline; }
-.settings .sum { margin-left: auto; font-weight: 400; font-size: 14px; color: var(--muted); text-align: right; }
+.settings summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; row-gap: 10px; }
+.settings summary::after { grid-column: 2; grid-row: 1; }
+.settings .st { grid-column: 1; grid-row: 1; white-space: nowrap; }
+.settings .sum { grid-column: 1 / -1; grid-row: 2; display: flex; flex-wrap: wrap; gap: 6px; }
+.settings .sum i { font-style: normal; font-family: var(--f-mono); font-size: 12px; font-weight: 500; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
 .settings .dbody { gap: 20px; }
 .seg.full button { flex: 1; justify-content: center; }
 .snd { font: inherit; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--ink); display: inline-grid; place-items: center; cursor: pointer; flex: none; padding: 0; }

@@ -68,7 +68,7 @@ const V = {
       ${S.msg ? `<p class="err">${esc(S.msg)}</p>` : ""}
     </section>
     <details id="setBox" class="settings" ${S.openSet ? "open" : ""}>
-      <summary>Réglages<span class="sum">${e.u} undercover${e.u > 1 ? "s" : ""} · ${e.w} Mr White · ${S.tours} trait${S.tours > 1 ? "s" : ""}${e.u ? " · " + simName(S.sim) : ""}</span></summary>
+      ${settingsSummary([`${e.u} undercover${e.u > 1 ? "s" : ""}`, `${e.w} Mr White`, `${S.tours} trait${S.tours > 1 ? "s" : ""}`, e.u ? simName(S.sim) : ""])}
       <div class="dbody">
         <section class="field">
           <div class="label">Undercovers</div>
