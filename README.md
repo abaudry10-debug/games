@@ -1,4 +1,4 @@
-# Jeux entre potes
+# Imposteur : jeux de soirée
 
 Catalogue de jeux de soirée, pensé d'abord pour le mobile, installable comme une app et jouable hors ligne.
 Site 100 % statique (HTML, CSS, JS), sans build ni dépendance, hébergé sur GitHub Pages.

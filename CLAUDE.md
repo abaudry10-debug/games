@@ -1,4 +1,4 @@
-# Jeux entre potes : consignes pour Claude
+# Imposteur : jeux de soirée (ex-« Jeux entre potes ») : consignes pour Claude
 
 Site statique de party games (bluff, soirée) pour Alex et ses potes, en français.
 En ligne sur GitHub Pages : https://abaudry10-debug.github.io/games/ (déployé depuis `main`, racine).

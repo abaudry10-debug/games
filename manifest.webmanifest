@@ -1,6 +1,6 @@
 {
-  "name": "Jeux entre potes",
-  "short_name": "Entre potes",
+  "name": "Imposteur : jeux de soirée",
+  "short_name": "Imposteur",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",
